@@ -1,4 +1,5 @@
 import os
+import time
 import json
 import logging
 from io import BytesIO
@@ -738,6 +739,9 @@ async def analyze_incident(
     """
     Enhanced Evidence Intelligence Layer & Live Analysis using Gemini.
     """
+    start_backend = time.time()
+    gemini_duration = 0.0
+
     has_image = image is not None
     has_video = video is not None
     has_voice = voice is not None
@@ -780,35 +784,19 @@ async def analyze_incident(
     if USE_GEMINI and genai_client:
         try:
             contents = []
+            # Shortened, high-efficiency prompt keeping only required classification fields
             prompt = f"""
-            Analyze the following community issue:
-            Title: {title}
-            Description: {description}
-            GPS Coords: {gps}
-            User Urgency: {urgency or 'None'}
-
-            Perform the following tasks as specialized agents:
-            1. Smart Issue Agent:
-               - Classify the category into one of: "Road Damage", "Water Infrastructure", "Drainage System", "Public Lighting", "Sanitation", or "Civil Infrastructure".
-               - Choose a matching icon and a theme color.
-               - Calculate a severity/priority rating: "Low", "Moderate", "High", or "Critical".
-            2. Resolution Agent:
-               - Recommend the responsible department (e.g. Department of Transportation, Municipal Water Board, etc.).
-               - Estimate the resolution time (e.g. "12 hours", "2 days", etc.).
-            3. Citizen Assistance Agent:
-               - Check if the description is too short, unclear, or incomplete.
-               - If it is incomplete (less than 15 characters or lacking detail), generate a helpful guidance string for the citizen. Otherwise, set guidance to null.
-
-            Return the output as a JSON object with keys:
-            - category: string
-            - priority: string
+            Analyze issue: {title}. Desc: {description}.
+            Return JSON:
+            - category: "Road Damage"|"Water Infrastructure"|"Drainage System"|"Public Lighting"|"Sanitation"|"Civil Infrastructure"
+            - priority: "Low"|"Moderate"|"High"|"Critical"
             - department: string
             - estimated_resolution: string
-            - color: string
-            - icon: string
+            - color: hex color
+            - icon: emoji
             - confidence: float
-            - summary: string
-            - guidance: string or null
+            - summary: short summary
+            - guidance: string (if desc < 15 chars/incomplete) else null
             """
             contents.append(prompt)
 
@@ -819,11 +807,15 @@ async def analyze_incident(
                 img = Image.open(BytesIO(img_data))
                 contents.append(img)
 
+            start_gemini = time.time()
             response = genai_client.models.generate_content(
                 model='gemini-2.5-flash',
                 contents=contents,
                 config=types.GenerateContentConfig(response_mime_type="application/json")
             )
+            gemini_duration = time.time() - start_gemini
+            logger.info(f"Gemini API response duration: {gemini_duration:.3f}s")
+            
             gemini_data = json.loads(response.text)
             if gemini_data:
                 category = gemini_data.get("category", category)
@@ -897,6 +889,9 @@ async def analyze_incident(
         {"agent": "Citizen Assistance Agent", "log": guidance if guidance else "Description verified as complete and helpful."}
     ]
 
+    backend_duration = time.time() - start_backend
+    logger.info(f"Backend processing duration: {backend_duration:.3f}s")
+
     return {
         "category": category,
         "severity": combined_severity,
@@ -916,7 +911,9 @@ async def analyze_incident(
         "agent_workflow": agent_workflow,
         "icon": icon,
         "color": color,
-        "guidance": guidance
+        "guidance": guidance,
+        "gemini_duration": gemini_duration,
+        "backend_duration": backend_duration
     }
 
 

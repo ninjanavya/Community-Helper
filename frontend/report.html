@@ -1229,9 +1229,20 @@
             if (imgInput.files.length > 0) formData.append('image', imgInput.files[0]);
             if (voiceBlob) formData.append('voice', voiceBlob, 'voice_memo.wav');
 
-            fetch('http://127.0.0.1:8000/api/analyze', { method: 'POST', body: formData })
+            // AbortController: trigger fallback if /api/analyze takes > 9 seconds
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => {
+                controller.abort();
+                console.warn('[Timeout] /api/analyze exceeded 9s — triggering offline fallback.');
+            }, 9000);
+
+            const requestStart = performance.now();
+
+            fetch('http://127.0.0.1:8000/api/analyze', { method: 'POST', body: formData, signal: controller.signal })
             .then(res => { if (!res.ok) throw new Error("API analysis failed"); return res.json(); })
             .then(async (aiResult) => {
+                clearTimeout(timeoutId);
+                console.log(`[Timing] /api/analyze responded in ${(performance.now() - requestStart).toFixed(0)}ms`);
                 console.log("Gemini AI Analysis Result:", aiResult);
 
                 const generatedId = aiResult.id || "RD-" + Math.floor(1000 + Math.random() * 9000);
@@ -1286,7 +1297,10 @@
             .then(savedInc => {
                 console.log("Incident successfully saved to database:", savedInc);
                 localStorage.setItem('active_citizen_incident_id', savedInc.id);
-                
+
+                // Always clear loader before redirect
+                document.getElementById('loading-container').classList.add('hidden');
+
                 setTimeout(() => { window.location.href = 'citizen.html?ticket=' + savedInc.id; }, 1000);
 
                 fetch('http://127.0.0.1:8000/api/duplicate-check', {
@@ -1307,7 +1321,12 @@
                 .catch(e => console.error("Duplicate check skipped:", e));
             })
             .catch(async (err) => {
-                console.warn("Backend error. Falling back to local offline simulation.", err);
+                clearTimeout(timeoutId);
+                if (err.name === 'AbortError') {
+                    console.warn('[Fallback] Timeout triggered — running offline rule-based analysis.');
+                } else {
+                    console.warn("Backend error. Falling back to local offline simulation.", err);
+                }
                 
                 const ruleResult = mock_rule_based_analysis_js(title, desc);
                 const mockInc = {
@@ -1345,7 +1364,7 @@
                 const localList = JSON.parse(localStorage.getItem('hero_incidents_list') || '[]');
                 if (!localList.some(item => item.id === mockInc.id)) {
                     localList.unshift(mockInc);
-                    localStorage.setItem('hero_incidents_list', JSON.stringify(localList));
+                    localStorage.setItem('hero_incidents_list', JSON.stringify(mockInc));
                 }
 
                 await saveMediaLocally(mockInc.id);
