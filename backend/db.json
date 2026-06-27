@@ -1,0 +1,265 @@
+{
+    "incidents": [
+        {
+            "id": "RD-1142",
+            "category": "Road Damage",
+            "title": "Deep Pothole #RD-1142",
+            "description": "Deep pothole causing traffic slowing and hazard on MG Road.",
+            "location": "GPS Lock \u00b7 Lat: 12.971598, Lng: 77.594562",
+            "color": "#EF4444",
+            "icon": "\ud83d\udd73\ufe0f",
+            "status": "Assigned",
+            "crew": "Team Alpha",
+            "priority": "Critical",
+            "confidence": 96.5,
+            "gps": "12.971598, 77.594562",
+            "timestamp": 1782286777601,
+            "attachments": {
+                "text": true,
+                "image": true,
+                "voice": true
+            },
+            "votes": 13,
+            "comments": [
+                "Supported by an active citizen via nearby scan."
+            ],
+            "assigned_team": "Team Alpha",
+            "reporter_email": "citizen@communityhelper.gov",
+            "user_uid": "mock-uid-6f026517226e"
+        },
+        {
+            "id": "WL-0388",
+            "category": "Water Infrastructure",
+            "title": "Pipe Leak #WL-0388",
+            "description": "Water spraying onto sidewalk from fractured pipe.",
+            "location": "GPS Lock \u00b7 Lat: 12.972300, Lng: 77.594800",
+            "color": "#3B82F6",
+            "icon": "\ud83d\udca7",
+            "status": "Assigned",
+            "crew": "Water Works 1",
+            "priority": "Moderate",
+            "confidence": 94.2,
+            "gps": "12.972300, 77.594800",
+            "timestamp": 1782283177601,
+            "attachments": {
+                "text": true,
+                "image": true,
+                "voice": false
+            },
+            "assigned_team": "Water Works 1",
+            "reporter_email": "citizen@communityhelper.gov",
+            "user_uid": "mock-uid-6f026517226e"
+        },
+        {
+            "id": "DR-2771",
+            "category": "Drainage System",
+            "title": "Clogged Drain #DR-2771",
+            "description": "Debris and leaves blocking storm drain inlet.",
+            "location": "GPS Lock \u00b7 Lat: 12.973100, Lng: 77.593900",
+            "color": "#0EA5E9",
+            "icon": "\ud83c\udf0a",
+            "status": "Verified",
+            "crew": "Unassigned",
+            "priority": "Moderate",
+            "confidence": 95.8,
+            "gps": "12.973100, 77.593900",
+            "timestamp": 1782279577601,
+            "attachments": {
+                "text": true,
+                "image": false,
+                "voice": true
+            },
+            "reporter_email": "citizen@communityhelper.gov",
+            "user_uid": "mock-uid-6f026517226e"
+        },
+        {
+            "id": "CI-9902",
+            "category": "Civil Infrastructure",
+            "title": "Street Wall Crack #CI-9902",
+            "description": "Structural brick fissure along subway bridge support.",
+            "location": "GPS Lock \u00b7 Lat: 12.970200, Lng: 77.595100",
+            "color": "#FF6B35",
+            "icon": "\u26a0\ufe0f",
+            "status": "Assigned",
+            "crew": "Team Alpha",
+            "priority": "High",
+            "confidence": 92.1,
+            "gps": "12.970200, 77.595100",
+            "timestamp": 1782275977601,
+            "attachments": {
+                "text": true,
+                "image": true,
+                "voice": false
+            },
+            "reporter_email": "citizen@communityhelper.gov",
+            "user_uid": "mock-uid-6f026517226e"
+        },
+        {
+            "id": "GC-3344",
+            "category": "Sanitation",
+            "title": "Overflowing Bin #GC-3344",
+            "description": "Trash piling up outside collection bin attracting dogs.",
+            "location": "GPS Lock \u00b7 Lat: 12.974100, Lng: 77.596000",
+            "color": "#84CC16",
+            "icon": "\ud83d\uddd1\ufe0f",
+            "status": "Verified",
+            "crew": "Unassigned",
+            "priority": "Low",
+            "confidence": 98.4,
+            "gps": "12.974100, 77.596000",
+            "timestamp": 1782272377601,
+            "attachments": {
+                "text": true,
+                "image": false,
+                "voice": false
+            },
+            "assigned_team": "Unassigned",
+            "reporter_email": "citizen@communityhelper.gov",
+            "comments": [
+                "Citizen: ?? Rejected resolution. Issue still exists: road is still bumpy"
+            ],
+            "user_uid": "mock-uid-6f026517226e"
+        },
+        {
+            "id": "SL-4829",
+            "category": "Public Lighting",
+            "title": "Lamp Fault #SL-4829",
+            "description": "Streetlight is completely dark since Monday. Dangerous crossing.",
+            "location": "GPS Lock \u00c2\u00b7 Lat: 12.975000, Lng: 77.592500",
+            "color": "#F59E0B",
+            "icon": "\u00f0\u0178\u2019\u00a1",
+            "status": "Assigned",
+            "crew": "Team Alpha",
+            "priority": "Critical",
+            "confidence": 93.5,
+            "gps": "12.975000, 77.592500",
+            "timestamp": 1782286777601,
+            "attachments": {
+                "text": true,
+                "image": false,
+                "voice": false
+            },
+            "assigned_team": "Team Alpha",
+            "reporter_email": "citizen@communityhelper.gov",
+            "user_uid": "mock-uid-6f026517226e"
+        }
+    ],
+    "audit_logs": [
+        {
+            "timestamp": "10:29:07",
+            "event": "Incident GC-3344 updated: Status='Verified', Crew='Unassigned'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "10:28:41",
+            "event": "Incident GC-3344 updated: Status='Resolved', Crew='Team Delta'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "18:50:16",
+            "event": "Incident RD-1142 was escalated to CRITICAL priority due to SLA breach.",
+            "user": "Admin"
+        },
+        {
+            "timestamp": "18:50:16",
+            "event": "Incident RD-1142 updated: Status='Assigned', Crew='Team Alpha'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "17:53:21",
+            "event": "Incident RD-1142 was escalated to CRITICAL priority due to SLA breach.",
+            "user": "Admin"
+        },
+        {
+            "timestamp": "17:53:21",
+            "event": "Incident RD-1142 updated: Status='Assigned', Crew='Team Alpha'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "10:48:10",
+            "event": "Incident SL-4829 updated: Status='Assigned', Crew='Team Alpha'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "10:07:02",
+            "event": "Incident SL-4829 was escalated to CRITICAL priority due to SLA breach.",
+            "user": "Admin"
+        },
+        {
+            "timestamp": "05:49:11",
+            "event": "Incident GC-3344 updated: Status='Resolved', Crew='Team Delta'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "05:49:05",
+            "event": "Incident GC-3344 updated: Status='Resolved', Crew='Team Gamma'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "05:48:58",
+            "event": "Incident GC-3344 updated: Status='Resolved', Crew='Team Beta'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "05:48:55",
+            "event": "Incident GC-3344 updated: Status='Resolved', Crew='Unassigned'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "05:48:49",
+            "event": "Incident GC-3344 updated: Status='Resolved', Crew='Team Beta'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "05:48:43",
+            "event": "Incident GC-3344 updated: Status='Verified', Crew='Unassigned'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "05:47:52",
+            "event": "Incident RD-1142 updated: Status='Assigned', Crew='Team Alpha'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "05:47:49",
+            "event": "Incident WL-0388 updated: Status='Assigned', Crew='Water Works 1'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "05:47:45",
+            "event": "Incident WL-0388 updated: Status='Assigned', Crew='Team Beta'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "05:47:43",
+            "event": "Incident RD-1142 updated: Status='Assigned', Crew='Team Alpha'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "05:47:36",
+            "event": "Incident RD-1142 updated: Status='Assigned', Crew='Team Beta'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "05:47:27",
+            "event": "Incident RD-1142 updated: Status='Assigned', Crew='Team Alpha'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "14:29:49",
+            "event": "Incident RD-1142 updated: Status='Reported', Crew='Unassigned'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "13:09:37",
+            "event": "System initialized. Active digital twin connected.",
+            "user": "System"
+        },
+        {
+            "timestamp": "13:09:37",
+            "event": "Audit ledger synched with public confirmation node.",
+            "user": "System"
+        }
+    ],
+    "users": {}
+}

@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html class="light scroll-smooth overflow-y-auto" lang="en">
+<head>
+    <script src="auth-guard.js"></script>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Citizen Dashboard | Community Helper</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&amp;family=JetBrains+Mono:wght@500;700;800&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    
+    <!-- Tailwind Configuration -->
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-primary-container": "#7c839b",
+                "category-data": "#06B6D4",
+                "tertiary-fixed-dim": "#bcc7de",
+                "on-primary-fixed-variant": "#3f465c",
+                "on-secondary-container": "#5d1900",
+                "error-container": "#ffdad6",
+                "on-primary": "#ffffff",
+                "secondary-container": "#fe6a34",
+                "surface-variant": "#e0e3e5",
+                "on-tertiary": "#ffffff",
+                "tertiary-fixed": "#d8e3fb",
+                "primary": "#000000",
+                "primary-fixed-dim": "#bec6e0",
+                "secondary": "#ab3500",
+                "status-resolved": "#22C55E",
+                "secondary-fixed": "#ffdbd0",
+                "outline": "#76777d",
+                "surface-container": "#eceef0",
+                "primary-fixed": "#dae2fd",
+                "on-tertiary-fixed": "#111c2d",
+                "secondary-fixed-dim": "#ffb59d",
+                "primary-container": "#131b2e",
+                "on-surface-variant": "#45464d",
+                "on-error-container": "#93000a",
+                "inverse-primary": "#bec6e0",
+                "category-road": "#64748B",
+                "on-secondary-fixed-variant": "#832600",
+                "on-background": "#191c1e",
+                "outline-variant": "#c6c6cd",
+                "tertiary-container": "#111c2d",
+                "surface-dim": "#d8dadc",
+                "surface-bright": "#f7f9fb",
+                "on-tertiary-container": "#79849a",
+                "on-secondary-fixed": "#390c00",
+                "tertiary": "#000000",
+                "category-ecology": "#84CC16",
+                "inverse-on-surface": "#eff1f3",
+                "surface-container-high": "#e6e8ea",
+                "status-assigned": "#FF6B35",
+                "error": "#ba1a1a",
+                "surface-container-lowest": "#ffffff",
+                "on-surface": "#191c1e",
+                "surface": "#f7f9fb",
+                "inverse-surface": "#2d3133",
+                "category-water": "#0EA5E9",
+                "glass-border": "rgba(226, 232, 240, 0.8)",
+                "surface-tint": "#565e74",
+                "on-tertiary-fixed-variant": "#3c475a",
+                "status-reported": "#334155",
+                "surface-container-highest": "#e0e3e5",
+                "on-primary-fixed": "#131b2e",
+                "on-secondary": "#ffffff",
+                "glass-surface": "rgba(255, 255, 255, 0.92)",
+                "status-verified": "#F59E0B",
+                "glass-surface-dark": "rgba(15, 23, 42, 0.88)",
+                "on-error": "#ffffff",
+                "background": "#f7f9fb",
+                "surface-container-low": "#f2f4f6"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "3xl": "1.5rem",
+                "full": "9999px"
+            },
+            "spacing": {
+                "gutter-md": "16px",
+                "container-max": "1440px",
+                "nav-height": "64px",
+                "unit": "4px",
+                "margin-page": "24px"
+            },
+            "fontFamily": {
+                "technical-label": ["JetBrains Mono"],
+                "body-sm": ["Inter"],
+                "headline-md": ["Inter"],
+                "metric-value": ["Inter"],
+                "hero-title": ["Inter"],
+                "body-lg": ["Inter"],
+                "card-title": ["Inter"],
+                "status-badge": ["JetBrains Mono"],
+                "micro-copy": ["Inter"]
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-lg min-h-screen flex flex-col relative overflow-x-hidden">
+
+    <!-- TopAppBar -->
+    <header class="sticky top-0 w-full z-50 bg-glass-surface backdrop-blur-md border-b border-glass-border shadow-lg h-nav-height flex justify-between items-center px-margin-page">
+        <div class="flex items-center gap-6">
+            <span class="font-headline-md text-headline-md font-black text-primary">Community Helper</span>
+            <nav class="hidden md:flex items-center bg-surface-container-high p-1 rounded-xl border border-glass-border shadow-inner">
+                <a href="index.html" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-on-surface-variant hover:text-primary hover:bg-surface-container-lowest">Simulator</a>
+                <a href="citizen.html" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-surface-container-lowest text-secondary shadow-sm">Citizen</a>
+                <a href="manager.html" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-on-surface-variant hover:text-primary hover:bg-surface-container-lowest">Manager</a>
+                <a href="admin.html" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-on-surface-variant hover:text-primary hover:bg-surface-container-lowest">Administrator</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- MAIN DASHBOARD CONTAINER -->
+    <main class="flex-grow w-full py-8 px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="max-w-[1200px] mx-auto space-y-6">
+
+            <!-- Welcome Header Banner -->
+            <div class="glass-panel rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-md">
+                <div class="space-y-1">
+                    <span class="text-xs font-technical-label uppercase tracking-widest text-status-assigned font-bold">Citizen Portal</span>
+                    <h1 class="text-2xl md:text-3xl font-black text-primary" id="welcome-message">Welcome Back, Citizen</h1>
+                    <p class="text-sm text-on-surface-variant">Track your reported issues, verify crew resolutions, and stay updated on municipal diagnostics.</p>
+                </div>
+                <div class="shrink-0 flex items-center gap-3">
+                    <a href="report.html" class="inline-flex items-center gap-2 px-5 py-3.5 bg-secondary-container hover:bg-secondary text-on-secondary-container hover:text-on-secondary text-xs font-black uppercase tracking-wider rounded-xl shadow-md transition-all duration-300 transform active:scale-95">
+                        <span class="material-symbols-outlined text-sm font-bold">add_circle</span>
+                        Report New Issue
+                    </a>
+                </div>
+            </div>
+
+            <!-- Dashboard Stats Row -->
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="glass-panel rounded-2xl p-5 shadow-sm space-y-2">
+                    <span class="text-[9px] font-technical-label text-on-surface-variant uppercase tracking-widest font-bold block">Total Reported</span>
+                    <div class="flex items-baseline justify-between">
+                        <span class="text-3xl font-black text-primary font-headline-md" id="stat-total">0</span>
+                        <span class="material-symbols-outlined text-on-surface-variant/40">folder_shared</span>
+                    </div>
+                </div>
+                <div class="glass-panel rounded-2xl p-5 shadow-sm space-y-2">
+                    <span class="text-[9px] font-technical-label text-status-assigned uppercase tracking-widest font-bold block">Active Tracking</span>
+                    <div class="flex items-baseline justify-between">
+                        <span class="text-3xl font-black text-status-assigned font-headline-md" id="stat-active">0</span>
+                        <span class="material-symbols-outlined text-status-assigned/40">radar</span>
+                    </div>
+                </div>
+                <div class="glass-panel rounded-2xl p-5 shadow-sm space-y-2">
+                    <span class="text-[9px] font-technical-label text-status-resolved uppercase tracking-widest font-bold block">Resolved Cases</span>
+                    <div class="flex items-baseline justify-between">
+                        <span class="text-3xl font-black text-status-resolved font-headline-md" id="stat-resolved">0</span>
+                        <span class="material-symbols-outlined text-status-resolved/40">task_alt</span>
+                    </div>
+                </div>
+                <div class="glass-panel rounded-2xl p-5 shadow-sm space-y-2">
+                    <span class="text-[9px] font-technical-label text-category-water uppercase tracking-widest font-bold block">Notifications</span>
+                    <div class="flex items-baseline justify-between">
+                        <span class="text-3xl font-black text-category-water font-headline-md" id="stat-notifications">0</span>
+                        <span class="material-symbols-outlined text-category-water/40">notifications</span>
+                    </div>
+                </div>
+                <div class="glass-panel rounded-2xl p-5 shadow-sm space-y-2">
+                    <span class="text-[9px] font-technical-label text-status-verified uppercase tracking-widest font-bold block">Reward Points</span>
+                    <div class="flex items-baseline justify-between">
+                        <span class="text-3xl font-black text-status-verified font-headline-md" id="stat-points">0</span>
+                        <span class="material-symbols-outlined text-status-verified/40">military_tech</span>
+                    </div>
+                    <span class="text-[9px] font-technical-label font-bold uppercase tracking-wider" id="stat-tier-badge"
+                          style="color:#92400e; background:#fef3c7; padding:1px 6px; border-radius:6px;">Bronze Hero</span>
+                </div>
+            </div>
+
+            <!-- Two Column Layout: Tabs / List (Left) and Interactive Tracking Panel (Right) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- LEFT SIDE: Navigation and Lists -->
+                <div class="lg:col-span-7 space-y-6">
+
+                    <!-- Tab Buttons Bar -->
+                    <div class="glass-panel p-1.5 rounded-2xl flex items-center border border-glass-border shadow-inner">
+                        <button onclick="switchTab('active')" id="tab-btn-active" class="flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all duration-300 shadow-sm bg-surface-container-lowest text-secondary">
+                            My Reported Issues
+                        </button>
+                        <button onclick="switchTab('history')" id="tab-btn-history" class="flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all duration-300 text-on-surface-variant hover:text-primary font-bold">
+                            Issue History
+                        </button>
+                        <button onclick="switchTab('notifications')" id="tab-btn-notifications" class="flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all duration-300 text-on-surface-variant hover:text-primary relative font-bold">
+                            Notifications
+                            <span id="notif-badge" class="absolute top-2.5 right-4 w-2 h-2 bg-error rounded-full hidden"></span>
+                        </button>
+                    </div>
+
+                    <!-- TABS LIST CONTAINER -->
+                    <div class="glass-panel rounded-2xl p-5 shadow-sm min-h-[400px] overflow-hidden">
+                        
+                        <!-- TAB 1 & 2: Active Issues and History list -->
+                        <div id="tab-view-issues" class="space-y-4">
+                            <div class="flex items-center justify-between border-b border-glass-border pb-3">
+                                <h3 class="text-sm font-technical-label uppercase tracking-widest text-on-surface-variant font-bold flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-sm" id="view-icon">list_alt</span>
+                                    <span id="view-title">My Active Tickets</span>
+                                </h3>
+                                <span class="text-[10px] font-mono bg-surface-container-high px-2 py-0.5 rounded text-on-surface-variant" id="ticket-count">0 Tickets</span>
+                            </div>
+                            <div class="space-y-3 max-h-[500px] overflow-y-auto pr-1" id="issues-list">
+                                <!-- Dynamic List Items will be injected here -->
+                            </div>
+                        </div>
+
+                        <!-- TAB 3: Notifications list -->
+                        <div id="tab-view-notifications" class="space-y-4 hidden">
+                            <div class="flex items-center justify-between border-b border-glass-border pb-3">
+                                <h3 class="text-sm font-technical-label uppercase tracking-widest text-on-surface-variant font-bold flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-sm">notifications</span>
+                                    Activity Updates
+                                </h3>
+                                <button onclick="clearNotifications()" class="text-[10px] font-technical-label font-bold text-error uppercase hover:underline">
+                                    Clear All
+                                </button>
+                            </div>
+                            <div class="space-y-3 max-h-[500px] overflow-y-auto pr-1" id="notifications-list">
+                                <!-- Dynamic Notifications will be injected here -->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- RIGHT SIDE: Live Status Tracker & Resolution Verification -->
+                <div class="lg:col-span-5 space-y-6">
+
+                    <!-- Details Card (Awaiting Selection initially) -->
+                    <div id="tracking-panel" class="glass-panel rounded-2xl p-6 shadow-sm min-h-[460px] flex flex-col justify-center items-center text-center">
+                        <span class="material-symbols-outlined text-[64px] text-on-surface-variant/30 mb-4 animate-pulse">radar</span>
+                        <h3 class="font-headline-md text-lg font-black text-primary mb-2">Live Tracking Panel</h3>
+                        <p class="text-sm text-on-surface-variant max-w-xs leading-relaxed">
+                            Select a reported issue from your list to track real-time progression, view diagnostic updates, and verify task resolution.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Global Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+
+    <!-- JAVASCRIPT CODE -->
+    <script>
+        // Global State Variables
+        let currentTab = 'active'; // 'active', 'history', 'notifications'
+        let selectedIncidentId = null;
+        let incidents = [];
+        let notifications = [];
+        let ws = null;
+        let userPoints = 0;
+        let userTier = 'Bronze Hero';
+        let userResolvedCount = 0;
+        
+        const currentUserEmail = localStorage.getItem('hero_user_email') || 'citizen@communityhelper.gov';
+
+        // Initialize Page
+        document.addEventListener('DOMContentLoaded', () => {
+            // Update Welcome Header
+            document.getElementById('welcome-message').textContent = `Welcome Back, ${currentUserEmail}`;
+            
+            // Check query parameter for ticket selection
+            const urlParams = new URLSearchParams(window.location.search);
+            const ticketIdParam = urlParams.get('ticket');
+            if (ticketIdParam) {
+                selectedIncidentId = ticketIdParam;
+            }
+            
+            // Load Notifications from LocalStorage
+            loadNotificationsFromStorage();
+            
+            // Load user points from backend, then load incidents
+            loadUserPoints().finally(() => {
+                loadIncidents();
+                connectWebSocket();
+            });
+        });
+
+        // Fetch persisted points and tier from backend
+        function loadUserPoints() {
+            return fetch(`http://127.0.0.1:8000/api/users/${encodeURIComponent(currentUserEmail)}/points`)
+                .then(res => {
+                    if (!res.ok) throw new Error('Points API offline');
+                    return res.json();
+                })
+                .then(data => {
+                    userPoints = data.total_points || 0;
+                    userTier = data.tier || 'Bronze Hero';
+                    userResolvedCount = data.resolved_count || 0;
+                    renderPointsBadge();
+                })
+                .catch(() => {
+                    // Offline: use cached values from localStorage
+                    const cached = localStorage.getItem(`hero_points_${currentUserEmail}`);
+                    if (cached) {
+                        const d = JSON.parse(cached);
+                        userPoints = d.total_points || 0;
+                        userTier = d.tier || 'Bronze Hero';
+                        userResolvedCount = d.resolved_count || 0;
+                        renderPointsBadge();
+                    }
+                });
+        }
+
+        // Award points via backend PATCH and update local state
+        function awardPoints(priority, isResolved = false) {
+            return fetch(`http://127.0.0.1:8000/api/users/${encodeURIComponent(currentUserEmail)}/points`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'X-User-Role': 'member' },
+                body: JSON.stringify({ priority: priority || 'moderate', crowd_validated: false, resolved: isResolved })
+            })
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data) {
+                    const prev = userPoints;
+                    userPoints = data.total_points;
+                    userTier = data.tier;
+                    userResolvedCount = data.resolved_count;
+                    // Cache locally
+                    localStorage.setItem(`hero_points_${currentUserEmail}`, JSON.stringify(data));
+                    renderPointsBadge();
+                    // Show points earned toast
+                    const earned = data.total_points - prev;
+                    if (earned > 0) showToast(`+${earned} pts earned! You are now a ${data.tier}.`, 'success');
+                }
+            })
+            .catch(() => {
+                // Offline fallback: add points locally only
+                const POINTS_MAP = { low: 10, moderate: 25, medium: 25, high: 50, critical: 100 };
+                const base = POINTS_MAP[(priority || 'moderate').toLowerCase()] || 25;
+                const bonus = isResolved ? 20 : 0;
+                userPoints += base + bonus;
+                if (isResolved) userResolvedCount++;
+                userTier = computeTierLocal(userPoints);
+                localStorage.setItem(`hero_points_${currentUserEmail}`, JSON.stringify({ total_points: userPoints, tier: userTier, resolved_count: userResolvedCount }));
+                renderPointsBadge();
+            });
+        }
+
+        // Client-side tier computation (mirrors backend)
+        function computeTierLocal(pts) {
+            if (pts >= 700) return 'Community Champion';
+            if (pts >= 301) return 'Gold Hero';
+            if (pts >= 101) return 'Silver Hero';
+            return 'Bronze Hero';
+        }
+
+        // Render the points stat card and tier badge
+        function renderPointsBadge() {
+            const el = document.getElementById('stat-points');
+            const badge = document.getElementById('stat-tier-badge');
+            if (el) el.textContent = userPoints;
+            if (badge) {
+                badge.textContent = userTier;
+                const tierColors = {
+                    'Community Champion': { color: '#7c3aed', bg: '#ede9fe' },
+                    'Gold Hero':          { color: '#92400e', bg: '#fef3c7' },
+                    'Silver Hero':        { color: '#374151', bg: '#f3f4f6' },
+                    'Bronze Hero':        { color: '#78350f', bg: '#fef9c3' }
+                };
+                const tc = tierColors[userTier] || tierColors['Bronze Hero'];
+                badge.style.color = tc.color;
+                badge.style.background = tc.bg;
+            }
+        }
+
+        // Load Incidents from API with LocalStorage Fallback
+        function loadIncidents() {
+            fetch('http://127.0.0.1:8000/api/incidents')
+                .then(res => {
+                    if (!res.ok) throw new Error("API Offline");
+                    return res.json();
+                })
+                .then(data => {
+                    incidents = data;
+                    // Cache in localStorage
+                    localStorage.setItem('hero_incidents_list', JSON.stringify(incidents));
+                    renderDashboard();
+                })
+                .catch(err => {
+                    console.warn("Falling back to local storage cache:", err);
+                    const localData = localStorage.getItem('hero_incidents_list');
+                    if (localData) {
+                        incidents = JSON.parse(localData);
+                    }
+                    renderDashboard();
+                });
+        }
+
+        // Render Dashboard UI components
+        function renderDashboard() {
+            // Filter user's incidents
+            const myIncidents = incidents.filter(inc => inc.reporter_email === currentUserEmail);
+            
+            // Stats Calculation
+            const total = myIncidents.length;
+            const active = myIncidents.filter(inc => !isIncidentClosed(inc)).length;
+            // Use backend resolved_count when available; fall back to local count
+            const resolvedLocal = myIncidents.filter(inc => isIncidentClosed(inc)).length;
+            const resolved = userResolvedCount > 0 ? Math.max(userResolvedCount, resolvedLocal) : resolvedLocal;
+            const unreadNotifs = notifications.filter(n => !n.read).length;
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-active').textContent = active;
+            document.getElementById('stat-resolved').textContent = resolved;
+            document.getElementById('stat-notifications').textContent = unreadNotifs;
+            // Keep points/tier card in sync
+            renderPointsBadge();
+
+            // Notification Badge
+            const badge = document.getElementById('notif-badge');
+            if (unreadNotifs > 0) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            // Render active tab list
+            if (currentTab === 'notifications') {
+                renderNotificationsList();
+            } else {
+                renderIssuesList(myIncidents);
+            }
+
+            // Refresh selected incident tracking details if open
+            if (selectedIncidentId) {
+                const selectedInc = incidents.find(inc => inc.id === selectedIncidentId);
+                if (selectedInc) {
+                    renderTrackingPanel(selectedInc);
+                } else {
+                    resetTrackingPanel();
+                }
+            }
+        }
+
+        // Helper to check if citizen confirmed the resolution
+        function isIncidentClosed(inc) {
+            if (inc.status !== 'Resolved') return false;
+            // Resolved and contains confirmation comment
+            return inc.comments && inc.comments.some(c => c.startsWith("Citizen: 👍") || c.includes("Confirmed resolution"));
+        }
+
+        // Switch Tabs
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            const btnActive = document.getElementById('tab-btn-active');
+            const btnHistory = document.getElementById('tab-btn-history');
+            const btnNotif = document.getElementById('tab-btn-notifications');
+            
+            const viewIssues = document.getElementById('tab-view-issues');
+            const viewNotif = document.getElementById('tab-view-notifications');
+
+            // Apply styles
+            [btnActive, btnHistory, btnNotif].forEach(btn => {
+                btn.className = "flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all duration-300 text-on-surface-variant hover:text-primary bg-transparent font-bold";
+            });
+
+            if (tab === 'active') {
+                btnActive.className = "flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all duration-300 shadow-sm bg-surface-container-lowest text-secondary";
+                viewIssues.classList.remove('hidden');
+                viewNotif.classList.add('hidden');
+                document.getElementById('view-title').textContent = "My Active Tickets";
+                document.getElementById('view-icon').textContent = "list_alt";
+            } else if (tab === 'history') {
+                btnHistory.className = "flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all duration-300 shadow-sm bg-surface-container-lowest text-secondary";
+                viewIssues.classList.remove('hidden');
+                viewNotif.classList.add('hidden');
+                document.getElementById('view-title').textContent = "Resolved Ticket History";
+                document.getElementById('view-icon').textContent = "history";
+            } else if (tab === 'notifications') {
+                btnNotif.className = "flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all duration-300 shadow-sm bg-surface-container-lowest text-secondary";
+                viewIssues.classList.add('hidden');
+                viewNotif.classList.remove('hidden');
+                // Mark all notifications as read when opening notifications tab
+                notifications.forEach(n => n.read = true);
+                saveNotificationsToStorage();
+            }
+
+            renderDashboard();
+        }
+
+        // Render Issue List
+        function renderIssuesList(myIncidents) {
+            const listContainer = document.getElementById('issues-list');
+            listContainer.innerHTML = '';
+
+            let filtered = [];
+            if (currentTab === 'active') {
+                filtered = myIncidents.filter(inc => !isIncidentClosed(inc));
+            } else {
+                filtered = myIncidents.filter(inc => isIncidentClosed(inc));
+            }
+
+            document.getElementById('ticket-count').textContent = `${filtered.length} Tickets`;
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-16 flex flex-col items-center justify-center space-y-3">
+                        <span class="material-symbols-outlined text-slate-300 text-4xl">folder_off</span>
+                        <p class="text-xs text-on-surface-variant font-bold uppercase tracking-widest">No Tickets Found</p>
+                        <p class="text-[11px] text-on-surface-variant max-w-[200px] leading-relaxed">No reports matching this state exist.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(inc => {
+                const isSelected = inc.id === selectedIncidentId;
+                const statusColor = getStatusColorClass(inc.status, isIncidentClosed(inc));
+                const categoryColor = getCategoryColorClass(inc.category);
+                
+                const card = document.createElement('div');
+                card.onclick = () => selectIncident(inc.id);
+                card.className = `p-4 border rounded-xl cursor-pointer transition-all duration-300 flex items-center justify-between gap-4 ${
+                    isSelected 
+                        ? 'border-secondary bg-secondary/5 shadow-sm' 
+                        : 'border-glass-border bg-surface-container-lowest hover:border-slate-300'
+                }`;
+
+                // Check if citizen feedback is required
+                const requiresConfirmation = inc.status === 'Resolved' && !isIncidentClosed(inc);
+                const actionBadge = requiresConfirmation
+                    ? `<span class="px-2 py-0.5 text-[8px] font-black uppercase text-white bg-error rounded shadow-sm animate-pulse flex items-center gap-1"><span class="material-symbols-outlined text-[9px] font-bold">feedback</span> Action Required</span>`
+                    : '';
+
+                card.innerHTML = `
+                    <div class="space-y-1.5 flex-grow min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono text-[10px] text-on-surface-variant font-black">${inc.id}</span>
+                            <span class="w-1.5 h-1.5 rounded-full ${categoryColor}"></span>
+                            <span class="text-[10px] font-technical-label text-on-surface-variant uppercase">${inc.category}</span>
+                            ${actionBadge}
+                        </div>
+                        <h4 class="text-xs font-bold text-primary truncate leading-tight">${inc.title}</h4>
+                        <p class="text-[10px] text-on-surface-variant truncate">${inc.location}</p>
+                    </div>
+                    <div class="shrink-0 text-right space-y-1">
+                        <span class="px-2 py-1 text-[9px] font-technical-label font-bold rounded-lg uppercase tracking-wider ${statusColor}">
+                            ${requiresConfirmation ? 'Awaiting Verify' : inc.status}
+                        </span>
+                        <span class="block text-[8px] font-mono text-on-surface-variant">${formatDate(inc.timestamp)}</span>
+                    </div>
+                `;
+                listContainer.appendChild(card);
+            });
+        }
+
+        // Select Incident
+        function selectIncident(id) {
+            selectedIncidentId = id;
+            const inc = incidents.find(item => item.id === id);
+            if (inc) {
+                renderTrackingPanel(inc);
+            }
+            renderDashboard();
+        }
+
+        // Reset Tracking Panel
+        function resetTrackingPanel() {
+            selectedIncidentId = null;
+            const panel = document.getElementById('tracking-panel');
+            panel.className = "glass-panel rounded-2xl p-6 shadow-sm min-h-[460px] flex flex-col justify-center items-center text-center";
+            panel.innerHTML = `
+                <span class="material-symbols-outlined text-[64px] text-on-surface-variant/30 mb-4 animate-pulse">radar</span>
+                <h3 class="font-headline-md text-lg font-black text-primary mb-2">Live Tracking Panel</h3>
+                <p class="text-sm text-on-surface-variant max-w-xs leading-relaxed">
+                    Select a reported issue from your list to track real-time progression, view diagnostic updates, and verify task resolution.
+                </p>
+            `;
+        }
+
+        // Render Live Tracking Details & Timelines
+        function renderTrackingPanel(inc) {
+            const panel = document.getElementById('tracking-panel');
+            panel.className = "glass-panel rounded-2xl p-6 shadow-sm min-h-[460px] space-y-6 flex flex-col text-left";
+
+            const isClosed = isIncidentClosed(inc);
+            const isPendingConfirm = inc.status === 'Resolved' && !isClosed;
+            const statusColor = getStatusColorClass(inc.status, isClosed);
+
+            // Construct Timeline HTML
+            const timelineHtml = renderTimeline(inc, isClosed);
+
+            // Construct Verification Panel HTML (only if Resolved and awaiting confirmation)
+            let verificationHtml = '';
+            if (isPendingConfirm) {
+                const photos = getBeforeAfterPhotos(inc.category);
+                verificationHtml = `
+                    <!-- Verification Box -->
+                    <div class="border border-error/20 bg-error-container/5 rounded-2xl p-4 space-y-4">
+                        <div class="flex items-center gap-2 text-error">
+                            <span class="material-symbols-outlined text-sm font-bold">verified_user</span>
+                            <span class="text-[10px] font-technical-label uppercase tracking-widest font-black">Resolution Verification Required</span>
+                        </div>
+                        <p class="text-[11px] text-on-surface-variant leading-relaxed">
+                            Municipal Crew <strong>${inc.crew || 'Dispatch Team'}</strong> has resolved this ticket. Please review the before/after evidence below and confirm if the work was completed satisfactorily.
+                        </p>
+                        
+                        <!-- Before / After Photos -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase text-center">Before (Reported)</span>
+                                <div class="w-full h-24 rounded-lg overflow-hidden border border-glass-border bg-slate-100">
+                                    <img src="${photos.before}" class="w-full h-full object-cover" alt="Incident before photo">
+                                </div>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase text-center">After (Resolved)</span>
+                                <div class="w-full h-24 rounded-lg overflow-hidden border border-glass-border bg-slate-100">
+                                    <img src="${photos.after}" class="w-full h-full object-cover" alt="Incident after photo">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Feedback area -->
+                        <div class="space-y-1.5">
+                            <label class="block text-[8px] font-technical-label text-on-surface-variant uppercase">Citizen Feedback Memo</label>
+                            <textarea id="feedback-comment" rows="2" class="w-full text-[11px] bg-white border border-outline-variant focus:border-secondary focus:ring-1 focus:ring-secondary/15 rounded-lg py-2 px-3 transition-all" placeholder="Optional notes for confirmation. REQUIRED if reporting issue still exists..."></textarea>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex items-center gap-2 pt-1">
+                            <button onclick="confirmResolution('${inc.id}')" class="flex-1 py-2 bg-status-resolved text-white hover:bg-green-600 font-bold text-xs rounded-lg transition-transform active:scale-95 shadow flex items-center justify-center gap-1.5">
+                                <span>👍</span> Confirm Solved
+                            </button>
+                            <button onclick="rejectResolution('${inc.id}')" class="flex-1 py-2 bg-error text-white hover:bg-red-600 font-bold text-xs rounded-lg transition-transform active:scale-95 shadow flex items-center justify-center gap-1.5">
+                                <span>👎</span> Still Exists
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (isClosed) {
+                const photos = getBeforeAfterPhotos(inc.category);
+                verificationHtml = `
+                    <!-- Verified Resolution Banner -->
+                    <div class="border border-status-resolved/20 bg-status-resolved/5 rounded-2xl p-4 space-y-3">
+                        <div class="flex items-center gap-2 text-status-resolved">
+                            <span class="material-symbols-outlined text-sm font-bold">verified</span>
+                            <span class="text-[10px] font-technical-label uppercase tracking-widest font-black">Citizen Verified Resolution</span>
+                        </div>
+                        <p class="text-[11px] text-on-surface-variant">
+                            You confirmed the resolution of this issue. Thank you for helping improve our community!
+                        </p>
+                        <!-- Before / After Photos -->
+                        <div class="grid grid-cols-2 gap-3 opacity-75">
+                            <div class="space-y-0.5">
+                                <span class="block text-[7px] font-technical-label text-on-surface-variant uppercase text-center">Before</span>
+                                <div class="w-full h-16 rounded-md overflow-hidden border border-glass-border">
+                                    <img src="${photos.before}" class="w-full h-full object-cover" alt="Incident before photo">
+                                </div>
+                            </div>
+                            <div class="space-y-0.5">
+                                <span class="block text-[7px] font-technical-label text-on-surface-variant uppercase text-center">After</span>
+                                <div class="w-full h-16 rounded-md overflow-hidden border border-glass-border">
+                                    <img src="${photos.after}" class="w-full h-full object-cover" alt="Incident after photo">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Construct comments log HTML
+            let commentsHtml = '';
+            if (inc.comments && inc.comments.length > 0) {
+                commentsHtml = `
+                    <div class="space-y-2">
+                        <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none">Diagnostic Audit Log</span>
+                        <div class="bg-surface-container-low border border-glass-border rounded-xl p-3 max-h-36 overflow-y-auto space-y-1.5 font-bold">
+                            ${inc.comments.map(c => {
+                                const isCitizen = c.startsWith("Citizen:");
+                                const isManager = c.startsWith("Manager:");
+                                const formatted = c.replace(/^(Citizen|Manager):\s*/, '');
+                                let textClass = 'text-primary';
+                                let userTag = 'SYSTEM';
+                                let tagClass = 'bg-surface-container-highest text-on-surface-variant border-slate-300';
+                                if (isCitizen) {
+                                    userTag = 'CITIZEN';
+                                    tagClass = 'bg-secondary/10 text-secondary border-secondary/20';
+                                    textClass = 'text-primary font-medium';
+                                } else if (isManager) {
+                                    userTag = 'SUPERVISOR';
+                                    tagClass = 'bg-blue-500/10 text-blue-700 border-blue-500/20';
+                                }
+                                return `
+                                    <div class="text-[10px] leading-tight flex items-start gap-1.5 border-b border-glass-border/30 pb-1 last:border-0 last:pb-0">
+                                        <span class="font-mono text-[7px] font-black px-1 rounded border uppercase tracking-wider shrink-0 mt-0.5 ${tagClass}">${userTag}</span>
+                                        <p class="${textClass}">${formatted}</p>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            panel.innerHTML = `
+                <!-- Panel Header -->
+                <div class="flex items-start justify-between border-b border-glass-border pb-3">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono text-xs font-black text-on-surface-variant">${inc.id}</span>
+                            <span class="px-2 py-0.5 text-[8px] font-technical-label font-bold rounded-lg uppercase tracking-wider ${statusColor}">
+                                ${inc.status}
+                            </span>
+                        </div>
+                        <h3 class="font-headline-md text-base font-black text-primary leading-tight">${inc.title}</h3>
+                        <p class="text-[10px] text-on-surface-variant">${inc.location}</p>
+                    </div>
+                    <button onclick="resetTrackingPanel()" class="text-on-surface-variant hover:text-primary">
+                        <span class="material-symbols-outlined text-lg">close</span>
+                    </button>
+                </div>
+
+                <!-- Main Details Scroll Area -->
+                <div class="flex-grow overflow-y-auto space-y-5 pr-1 text-xs">
+                    
+                    <!-- Ticket Description -->
+                    <div class="space-y-1">
+                        <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none">Issue Description</span>
+                        <p class="text-primary font-medium leading-relaxed bg-surface-container-low border border-glass-border rounded-xl p-3 shadow-inner">
+                            ${inc.description}
+                        </p>
+                    </div>
+
+                    <!-- Dispatch Assignment details -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-surface-container-low border border-glass-border p-3 rounded-xl">
+                            <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none">Allocated Crew</span>
+                            <span class="block mt-1 font-bold text-primary flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-sm text-status-assigned font-bold">engineering</span>
+                                ${inc.crew || 'Unassigned'}
+                            </span>
+                        </div>
+                        <div class="bg-surface-container-low border border-glass-border p-3 rounded-xl">
+                            <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none">Response Priority</span>
+                            <span class="block mt-1 font-bold text-primary flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-error"></span>
+                                ${inc.priority || 'Moderate'}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Live Timeline -->
+                    <div class="space-y-3">
+                        <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none">Resolution Telemetry Tracker</span>
+                        <div class="space-y-4 pl-3 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-200">
+                            ${timelineHtml}
+                        </div>
+                    </div>
+
+                    <!-- Verification Container -->
+                    ${verificationHtml}
+
+                    <!-- Audit Log comments -->
+                    ${commentsHtml}
+
+                </div>
+            `;
+        }
+
+        // Generate Live Timeline Progression
+        function renderTimeline(inc, isClosed) {
+            const statusLower = (inc.status || "").toLowerCase();
+            const hasCrew = inc.crew && inc.crew !== 'Unassigned';
+
+            // Define status sequence flags
+            const sSubmitted = true; // Always true if ticket exists
+            const sAiComplete = true; // AI diagnostics is instant in this mock
+            const sAssignedMgr = true; // Managers get it instantly in queue
+            const sCrewDispatched = hasCrew || statusLower === 'assigned' || statusLower === 'resolved';
+            const sWorkDone = statusLower === 'resolved';
+            const sConfirmDone = isClosed;
+
+            const steps = [
+                { label: 'Report Submitted', done: sSubmitted, active: false },
+                { label: 'AI Analysis Complete', done: sAiComplete, active: false },
+                { label: 'Assigned to Manager', done: sAssignedMgr, active: false },
+                { 
+                    label: `Worker Dispatched ${hasCrew ? `(${inc.crew})` : ''}`, 
+                    done: sCrewDispatched, 
+                    active: !sCrewDispatched && (statusLower === 'reported' || statusLower === 'verified') 
+                },
+                { 
+                    label: 'Work Completed', 
+                    done: sWorkDone, 
+                    active: !sWorkDone && statusLower === 'assigned' 
+                },
+                { 
+                    label: 'Citizen Confirmation Pending', 
+                    done: sConfirmDone, 
+                    active: !sConfirmDone && statusLower === 'resolved' 
+                }
+            ];
+
+            return steps.map(step => {
+                let iconClass = 'bg-slate-100 border-slate-300 text-slate-400';
+                let labelClass = 'text-on-surface-variant';
+                let icon = '';
+
+                if (step.done) {
+                    iconClass = 'bg-status-resolved border-status-resolved text-white';
+                    labelClass = 'text-primary font-bold';
+                    icon = '<span class="material-symbols-outlined text-[10px] font-bold">check</span>';
+                } else if (step.active) {
+                    iconClass = 'bg-status-assigned/10 border-status-assigned text-status-assigned animate-pulse';
+                    labelClass = 'text-status-assigned font-bold';
+                    icon = '<span class="w-1.5 h-1.5 bg-status-assigned rounded-full"></span>';
+                } else {
+                    icon = '<span class="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>';
+                }
+
+                return `
+                    <div class="flex items-center gap-3.5 relative z-10">
+                        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-bold shrink-0 ${iconClass}">
+                            ${icon}
+                        </div>
+                        <span class="text-[11px] uppercase font-technical-label tracking-wide ${labelClass}">${step.label}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Get Photos object based on category
+        function getBeforeAfterPhotos(category) {
+            const cat = (category || "").toLowerCase();
+            // All categories display high quality pothole comparison assets for hackathon parity
+            return {
+                before: "assets/pothole_before.png",
+                after: "assets/pothole_after.png"
+            };
+        }
+
+        // Action: Confirm Resolution (👍)
+        function confirmResolution(id) {
+            const feedbackText = document.getElementById('feedback-comment').value.trim();
+            const comment = `Citizen: 👍 Confirmed resolution.${feedbackText ? ` Feedback: ${feedbackText}` : ''}`;
+            
+            showToast("Submitting confirmation...", "info");
+
+            // Fetch latest comments first
+            fetch('http://127.0.0.1:8000/api/incidents')
+                .then(res => res.json())
+                .then(allIncs => {
+                    const inc = allIncs.find(item => item.id === id);
+                    const comments = inc.comments || [];
+                    comments.push(comment);
+                    // Store incident priority for points award
+                    window._confirmingPriority = inc.priority || 'moderate';
+
+                    return fetch(`http://127.0.0.1:8000/api/incidents/${id}`, {
+                        method: 'PATCH',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-User-Role': 'member'
+                        },
+                        body: JSON.stringify({
+                            status: "Resolved",
+                            comments: comments
+                        })
+                    });
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error("Verification patch failed");
+                    return res.json();
+                })
+                .then(updatedInc => {
+                    showToast("Resolution confirmed! Thank you.", "success");
+                    // Award resolution bonus points (base priority pts + RESOLVED_BONUS)
+                    awardPoints(window._confirmingPriority || 'moderate', true);
+                    loadIncidents();
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast("Error updating ticket. Offline changes saved locally.", "error");
+                    // Offline fallback
+                    const index = incidents.findIndex(item => item.id === id);
+                    if (index !== -1) {
+                        incidents[index].comments = incidents[index].comments || [];
+                        incidents[index].comments.push(comment);
+                        localStorage.setItem('hero_incidents_list', JSON.stringify(incidents));
+                        // Award points offline
+                        awardPoints('moderate', true);
+                        loadIncidents();
+                    }
+                });
+        }
+
+        // Action: Reject Resolution (👎)
+        function rejectResolution(id) {
+            const feedbackText = document.getElementById('feedback-comment').value.trim();
+            if (!feedbackText) {
+                showToast("Please enter feedback explaining why the issue is not solved.", "error");
+                document.getElementById('feedback-comment').focus();
+                return;
+            }
+
+            const comment = `Citizen: 👎 Rejected resolution. Issue still exists: ${feedbackText}`;
+            showToast("Reopening ticket...", "info");
+
+            // Fetch latest comments
+            fetch('http://127.0.0.1:8000/api/incidents')
+                .then(res => res.json())
+                .then(incidents => {
+                    const inc = incidents.find(item => item.id === id);
+                    const comments = inc.comments || [];
+                    comments.push(comment);
+
+                    return fetch(`http://127.0.0.1:8000/api/incidents/${id}`, {
+                        method: 'PATCH',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-User-Role': 'member'
+                        },
+                        body: JSON.stringify({
+                            status: "Verified",
+                            crew: "Unassigned", // send back to manager queue as unassigned
+                            comments: comments
+                        })
+                    });
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error("Reopen patch failed");
+                    return res.json();
+                })
+                .then(updatedInc => {
+                    showToast("Ticket successfully reopened and routed back to Supervisor queue.", "success");
+                    loadIncidents();
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast("Offline fallback: Reopening ticket locally.", "error");
+                    // Offline fallback
+                    const index = incidents.findIndex(item => item.id === id);
+                    if (index !== -1) {
+                        incidents[index].status = "Verified";
+                        incidents[index].crew = "Unassigned";
+                        incidents[index].assigned_team = "Unassigned";
+                        incidents[index].comments = incidents[index].comments || [];
+                        incidents[index].comments.push(comment);
+                        localStorage.setItem('hero_incidents_list', JSON.stringify(incidents));
+                        loadIncidents();
+                    }
+                });
+        }
+
+        // WebSocket Setup
+        function connectWebSocket() {
+            ws = new WebSocket('ws://127.0.0.1:8000/api/ws');
+            
+            ws.onmessage = function(event) {
+                const msg = JSON.parse(event.data);
+                console.log("WebSocket event on Citizen Dashboard:", msg);
+
+                if (msg.type === "INCIDENT_NEW" || msg.type === "incident_assigned" || 
+                    msg.type === "incident_resolved" || msg.type === "incident_updated" || 
+                    msg.type === "incident_escalated") {
+                    
+                    const updatedInc = msg.data;
+                    
+                    // Only alert/update if it belongs to this citizen
+                    if (updatedInc.reporter_email === currentUserEmail) {
+                        // Insert notification
+                        let text = "";
+                        if (msg.type === "INCIDENT_NEW") {
+                            text = `New report submitted: ${updatedInc.title} (${updatedInc.id})`;
+                            // Award base points for submitting a new incident
+                            awardPoints(updatedInc.priority || 'moderate', false);
+                        } else if (msg.type === "incident_assigned") {
+                            text = `Ticket ${updatedInc.id} assigned to Crew: ${updatedInc.crew}`;
+                        } else if (msg.type === "incident_resolved") {
+                            text = `Work completed on ${updatedInc.id}! Verification required.`;
+                        } else if (msg.type === "incident_escalated") {
+                            text = `Ticket ${updatedInc.id} priority escalated to Critical.`;
+                        } else {
+                            text = `Ticket ${updatedInc.id} updated.`;
+                        }
+
+                        // Trigger Toast Alert
+                        showToast(text, msg.type === "incident_resolved" ? "info" : "success");
+                        
+                        // Push Notification Object
+                        pushNotification(updatedInc.id, text);
+                        
+                        // Reload incidents
+                        loadIncidents();
+                    }
+                }
+            };
+
+            ws.onclose = function() {
+                console.log("WebSocket disconnected. Reconnecting in 3s...");
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        // Push new local notification
+        function pushNotification(ticketId, text) {
+            const notif = {
+                id: 'notif-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                ticketId: ticketId,
+                text: text,
+                timestamp: Date.now(),
+                read: currentTab === 'notifications' // read immediately if tab is open
+            };
+            notifications.unshift(notif);
+            saveNotificationsToStorage();
+            renderDashboard();
+            
+            // Trigger browser notification if permission granted
+            if (Notification.permission === 'granted') {
+                new Notification("Community Helper Status", { body: text });
+            } else if (Notification.permission !== 'denied') {
+                Notification.requestPermission();
+            }
+        }
+
+        // LocalStorage Notifications utilities
+        function loadNotificationsFromStorage() {
+            const stored = localStorage.getItem(`hero_notifs_${currentUserEmail}`);
+            if (stored) {
+                notifications = JSON.parse(stored);
+            } else {
+                notifications = [];
+            }
+        }
+
+        function saveNotificationsToStorage() {
+            localStorage.setItem(`hero_notifs_${currentUserEmail}`, JSON.stringify(notifications));
+        }
+
+        function clearNotifications() {
+            notifications = [];
+            saveNotificationsToStorage();
+            renderDashboard();
+            showToast("Notifications cleared.", "success");
+        }
+
+        // Render Notifications List
+        function renderNotificationsList() {
+            const listContainer = document.getElementById('notifications-list');
+            listContainer.innerHTML = '';
+
+            if (notifications.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-16 flex flex-col items-center justify-center space-y-3">
+                        <span class="material-symbols-outlined text-slate-300 text-4xl">notifications_off</span>
+                        <p class="text-xs text-on-surface-variant font-bold uppercase tracking-widest">No Alerts</p>
+                        <p class="text-[11px] text-on-surface-variant max-w-[200px] leading-relaxed">Notifications and live dispatch alerts will appear here.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            notifications.forEach(notif => {
+                const card = document.createElement('div');
+                card.onclick = () => {
+                    selectIncident(notif.ticketId);
+                    switchTab('active');
+                };
+                card.className = "p-3 border border-glass-border bg-surface-container-lowest rounded-xl hover:border-slate-300 cursor-pointer flex items-center justify-between gap-3 text-xs";
+                card.innerHTML = `
+                    <div class="space-y-0.5">
+                        <p class="text-primary font-medium leading-snug">${notif.text}</p>
+                        <span class="block text-[8px] font-mono text-on-surface-variant">${formatDate(notif.timestamp)}</span>
+                    </div>
+                    <span class="material-symbols-outlined text-on-surface-variant/40 hover:text-primary text-sm shrink-0">chevron_right</span>
+                `;
+                listContainer.appendChild(card);
+            });
+        }
+
+        // Utility: Status badge color picker
+        function getStatusColorClass(status, isClosed) {
+            if (isClosed) return 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 border';
+            
+            const s = (status || "").toLowerCase();
+            if (s === 'reported') return 'bg-slate-500/10 border-slate-500/20 text-slate-700 border';
+            if (s === 'verified') return 'bg-amber-500/10 border-amber-500/20 text-amber-700 border';
+            if (s === 'assigned') return 'bg-blue-500/10 border-blue-500/20 text-blue-700 border';
+            if (s === 'resolved') return 'bg-error-container text-on-error-container border border-error/20'; // unresolved resolved = Action required
+            return 'bg-slate-500/10 border-slate-500/20 text-slate-700 border';
+        }
+
+        // Utility: Category dots color picker
+        function getCategoryColorClass(cat) {
+            const c = (cat || "").toLowerCase();
+            if (c.includes("road") || c.includes("pothole")) return 'bg-category-road';
+            if (c.includes("water") || c.includes("leak")) return 'bg-category-water';
+            if (c.includes("ecology") || c.includes("park")) return 'bg-category-ecology';
+            if (c.includes("data") || c.includes("digital")) return 'bg-category-data';
+            return 'bg-slate-400';
+        }
+
+        // Utility: Date formatter
+        function formatDate(timestamp) {
+            if (!timestamp) return "-";
+            const date = new Date(timestamp);
+            return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + 
+                   date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: true });
+        }
+
+        // Custom Premium Toast Constructor
+        function showToast(message, type = 'error') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `px-4 py-3 rounded-xl shadow-2xl text-[11px] font-semibold text-white border pointer-events-auto transition-all duration-300 transform translate-x-12 opacity-0 flex items-center gap-2 ${
+                type === 'error' ? 'bg-slate-900/95 border-red-500/30 text-red-200' :
+                type === 'info' ? 'bg-slate-900/95 border-blue-500/30 text-blue-200' : 
+                'bg-slate-900/95 border-emerald-500/30 text-emerald-200'
+            }`;
+            
+            const icon = document.createElement('span');
+            icon.className = 'material-symbols-outlined text-sm ' + (
+                type === 'error' ? 'text-red-400' : 
+                type === 'info' ? 'text-blue-400' : 
+                'text-emerald-400'
+            );
+            icon.textContent = type === 'error' ? 'gpp_bad' : type === 'info' ? 'info' : 'check_circle';
+            
+            const text = document.createElement('span');
+            text.textContent = message;
+            
+            toast.appendChild(icon);
+            toast.appendChild(text);
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-x-12', 'opacity-0');
+                toast.classList.add('translate-x-0', 'opacity-100');
+            }, 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-x-0', 'opacity-100');
+                toast.classList.add('translate-x-12', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+    </script>
+</body>
+</html>

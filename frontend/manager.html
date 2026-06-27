@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <script src="auth-guard.js"></script>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Community Helper | Supervisor Management Hub</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .pulse-glow-red {
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(186, 26, 26, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(186, 26, 26, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(186, 26, 26, 0); }
+        }
+        .pulse-glow-orange {
+            animation: pulse-orange 2s infinite;
+        }
+        @keyframes pulse-orange {
+            0% { box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 107, 53, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 107, 53, 0); }
+        }
+        /* Custom Scrollbar for high density */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-container": "#7c839b",
+                    "category-data": "#06B6D4",
+                    "tertiary-fixed-dim": "#bcc7de",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "on-secondary-container": "#5d1900",
+                    "error-container": "#ffdad6",
+                    "on-primary": "#ffffff",
+                    "secondary-container": "#fe6a34",
+                    "surface-variant": "#e0e3e5",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed": "#d8e3fb",
+                    "primary": "#000000",
+                    "primary-fixed-dim": "#bec6e0",
+                    "secondary": "#ab3500",
+                    "status-resolved": "#22C55E",
+                    "secondary-fixed": "#ffdbd0",
+                    "outline": "#76777d",
+                    "surface-container": "#eceef0",
+                    "primary-fixed": "#dae2fd",
+                    "on-tertiary-fixed": "#111c2d",
+                    "secondary-fixed-dim": "#ffb59d",
+                    "primary-container": "#131b2e",
+                    "on-surface-variant": "#45464d",
+                    "on-error-container": "#93000a",
+                    "inverse-primary": "#bec6e0",
+                    "category-road": "#64748B",
+                    "on-secondary-fixed-variant": "#832600",
+                    "on-background": "#191c1e",
+                    "outline-variant": "#c6c6cd",
+                    "tertiary-container": "#111c2d",
+                    "surface-dim": "#d8dadc",
+                    "surface-bright": "#f7f9fb",
+                    "on-tertiary-container": "#79849a",
+                    "on-secondary-fixed": "#390c00",
+                    "tertiary": "#000000",
+                    "category-ecology": "#84CC16",
+                    "inverse-on-surface": "#eff1f3",
+                    "surface-container-high": "#e6e8ea",
+                    "status-assigned": "#FF6B35",
+                    "error": "#ba1a1a",
+                    "surface-container-lowest": "#ffffff",
+                    "on-surface": "#191c1e",
+                    "surface": "#f7f9fb",
+                    "inverse-surface": "#2d3133",
+                    "category-water": "#0EA5E9",
+                    "glass-border": "rgba(226, 232, 240, 0.8)",
+                    "surface-tint": "#565e74",
+                    "on-tertiary-fixed-variant": "#3c475a",
+                    "status-reported": "#334155",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-primary-fixed": "#131b2e",
+                    "on-secondary": "#ffffff",
+                    "glass-surface": "rgba(255, 255, 255, 0.92)",
+                    "status-verified": "#F59E0B",
+                    "glass-surface-dark": "rgba(15, 23, 42, 0.88)",
+                    "on-error": "#ffffff",
+                    "background": "#f7f9fb",
+                    "surface-container-low": "#f2f4f6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter-md": "16px",
+                    "container-max": "1440px",
+                    "nav-height": "64px",
+                    "unit": "4px",
+                    "margin-page": "24px"
+            },
+            "fontFamily": {
+                    "technical-label": ["JetBrains Mono"],
+                    "body-sm": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "metric-value": ["Inter"],
+                    "hero-title": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "card-title": ["Inter"],
+                    "status-badge": ["JetBrains Mono"],
+                    "micro-copy": ["Inter"]
+            },
+            "fontSize": {
+                    "technical-label": ["10px", {"lineHeight": "12px", "fontWeight": "700"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "700"}],
+                    "metric-value": ["24px", {"lineHeight": "32px", "fontWeight": "900"}],
+                    "hero-title": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "card-title": ["10px", {"lineHeight": "12px", "fontWeight": "800"}],
+                    "status-badge": ["8px", {"lineHeight": "10px", "fontWeight": "800"}],
+                    "micro-copy": ["8px", {"lineHeight": "10px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-lg overflow-x-hidden">
+    <!-- Top Navigation Shell -->
+    <header class="fixed top-0 w-full z-50 bg-glass-surface backdrop-blur-md border-b border-glass-border shadow-lg flex justify-between items-center h-nav-height px-margin-page">
+        <div class="flex items-center gap-6">
+            <span class="font-headline-md text-headline-md font-black text-primary">Community Helper</span>
+            <div class="hidden md:flex items-center bg-surface-container-high p-1 rounded-xl border border-glass-border shadow-inner ml-8">
+                <a class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-on-surface-variant hover:text-primary hover:bg-surface-container-lowest" href="index.html">Simulator</a>
+                <a class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-on-surface-variant hover:text-primary hover:bg-surface-container-lowest" href="report.html">Citizen</a>
+                <a class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-surface-container-lowest text-secondary shadow-sm" href="manager.html">Manager</a>
+                <a class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-on-surface-variant hover:text-primary hover:bg-surface-container-lowest" href="admin.html">Administrator</a>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 px-3 py-1 bg-status-resolved/10 rounded-full border border-status-resolved/20">
+                <div class="w-2 h-2 bg-status-resolved rounded-full animate-pulse"></div>
+                <span class="font-technical-label text-technical-label text-status-resolved">CITY STATUS: OPTIMAL</span>
+            </div>
+
+            <div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+                <img class="w-full h-full object-cover" data-alt="A professional portrait of a municipal operator in a high-tech command center. The lighting is crisp and cinematic, emphasizing technical precision. The background shows blurred data screens and glass panels, maintaining a clean light-mode aesthetic with primary black and white accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5dGeWdnQvIhJPrLNxEyQIEhEIl3eOHsyuawixtW4KvIYy_vZmKYrQkf-_B88lmkfhlsrs2EKYR2cKwrdPs0IXh0DZjo1Aw9nMATS13-72CM0XhmSzXUpOfPb0PNTVZBFpGfMukZqJFVdI26j_yqQV54_Rvq-oaIBk_ySHUMn5l4wRFI8eEzrdU9J1zmrmPtcHo7AzLbOauHtNtRz5kANQcA-J956pbmXwKUe345rwJdHlerrHMaj6uOE4rreElq8mh-h1rDeGrws"/>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex h-screen pt-nav-height">
+        <!-- Sidebar Navigation Shell -->
+        <aside class="h-[calc(100vh-64px)] w-64 hidden lg:flex flex-col bg-glass-surface backdrop-blur-md border-r border-glass-border shadow-md fixed left-0 top-[64px] z-40">
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-1">
+                    <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">security</span>
+                    <h2 class="font-headline-md text-headline-md font-black text-primary">Mission Control</h2>
+                </div>
+                <p class="font-technical-label text-technical-label text-on-surface-variant uppercase tracking-tighter">District 7 Sector</p>
+            </div>
+            <nav class="flex-1 px-2 space-y-1">
+                <div class="px-4 py-2 font-technical-label text-technical-label text-outline uppercase tracking-widest">Main Operations</div>
+                <a class="cursor-pointer bg-secondary-container text-on-secondary-container rounded-xl mx-2 px-4 py-3 flex items-center gap-3 transition-all" href="#" onclick="showToast('📊 Overview: Main operations dashboard active.')">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="font-technical-label text-technical-label">Overview</span>
+                </a>
+                <a class="cursor-pointer text-on-surface-variant hover:bg-surface-variant/30 rounded-lg mx-2 px-4 py-3 flex items-center gap-3 transition-all" href="#" onclick="showToast('🚨 Incidents: Scroll down to view the full incident queue.')">
+                    <span class="material-symbols-outlined">report_problem</span>
+                    <span class="font-technical-label text-technical-label">Incidents</span>
+                </a>
+                <a class="cursor-pointer text-on-surface-variant hover:bg-surface-variant/30 rounded-lg mx-2 px-4 py-3 flex items-center gap-3 transition-all" href="#" onclick="showToast('🔧 Resources: Field crew roster managed via Assign panel.')">
+                    <span class="material-symbols-outlined">engineering</span>
+                    <span class="font-technical-label text-technical-label">Resources</span>
+                </a>
+                <a class="cursor-pointer text-on-surface-variant hover:bg-surface-variant/30 rounded-lg mx-2 px-4 py-3 flex items-center gap-3 transition-all" href="#" onclick="showToast('👥 Citizen Feed: Reports submitted by verified citizens.')">
+                    <span class="material-symbols-outlined">group</span>
+                    <span class="font-technical-label text-technical-label">Citizen Feed</span>
+                </a>
+                <a class="cursor-pointer text-on-surface-variant hover:bg-surface-variant/30 rounded-lg mx-2 px-4 py-3 flex items-center gap-3 transition-all" href="#" onclick="showToast('⚙️ Settings: System configuration managed by Administrator.')">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span class="font-technical-label text-technical-label">Settings</span>
+                </a>
+            </nav>
+            <div class="p-4 border-t border-outline-variant/30">
+                <button onclick="showToast('🚨 Emergency Dispatch activated! All crews on alert.')" class="w-full cursor-pointer bg-[#FF6B35] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#e05a2b] transition-colors shadow-lg active:scale-95">
+                    <span class="material-symbols-outlined text-[18px]">emergency</span>
+                    <span>Emergency Dispatch</span>
+                </button>
+            <div class="p-4 border-t border-outline-variant/30 flex justify-between">
+                <button onclick="openHelpModal()" class="cursor-pointer flex items-center gap-1 font-technical-label text-technical-label text-on-surface-variant hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">help</span> Help
+                </button>
+                <button onclick="confirmResetDemo()" class="cursor-pointer flex items-center gap-1 font-technical-label text-technical-label text-on-surface-variant hover:text-red-500 transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">refresh</span> Reset Demo
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Canvas -->
+        <main class="flex-grow ml-0 lg:ml-64 overflow-y-auto bg-surface p-6 pb-24 md:pb-6">
+            <!-- Welcome Header Banner -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
+                <div>
+                    <h1 class="text-2xl font-black text-primary tracking-tight">Supervisor Incident Hub</h1>
+                    <p class="text-xs text-on-surface-variant mt-0.5">Manage work orders, assign teams, and sort public service priorities.</p>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="confirmResetDemo()" class="px-4 py-2.5 bg-surface-container-lowest border border-glass-border hover:border-red-500 hover:text-red-500 text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95">
+                        Reset Demo Queue
+                    </button>
+                </div>
+            </div>
+
+            <!-- Statistics Row -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="glass-panel glass-surface border border-glass-border p-5 rounded-xl shadow-lg flex items-center justify-between">
+                    <div>
+                        <p class="font-technical-label text-technical-label text-on-surface-variant uppercase tracking-widest mb-1">Active Incidents</p>
+                        <h3 class="font-metric-value text-metric-value text-primary" id="stat-active">0</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+                    </div>
+                </div>
+                <div class="glass-panel glass-surface border border-glass-border p-5 rounded-xl shadow-lg flex items-center justify-between">
+                    <div>
+                        <p class="font-technical-label text-technical-label text-on-surface-variant uppercase tracking-widest mb-1">Resolved Today</p>
+                        <h3 class="font-metric-value text-metric-value text-status-resolved" id="stat-resolved">0</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-status-resolved/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-status-resolved" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                    </div>
+                </div>
+                <div class="glass-panel glass-surface border border-glass-border p-5 rounded-xl shadow-lg flex items-center justify-between">
+                    <div>
+                        <p class="font-technical-label text-technical-label text-on-surface-variant uppercase tracking-widest mb-1">Dispatch Efficiency</p>
+                        <h3 class="font-metric-value text-metric-value text-category-data">94.2%</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-category-data/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-category-data" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <!-- Interactive Map Section -->
+                <div class="xl:col-span-2 space-y-6">
+                    <div class="glass-panel glass-surface border border-glass-border rounded-xl shadow-lg overflow-hidden h-[450px] relative">
+                        <div class="absolute top-4 left-4 z-10 flex gap-2">
+                            <span class="bg-glass-surface-dark/80 backdrop-blur-sm text-white px-3 py-1 rounded-full text-technical-label font-technical-label flex items-center gap-2">
+                                <span class="w-2 h-2 bg-error rounded-full pulse-glow-red"></span> LIVE FEED: D7 SECTOR MAP
+                            </span>
+                        </div>
+                        <div id="manager-map" class="w-full h-full min-h-[450px] bg-surface-variant/40"></div>
+                    </div>
+                    <!-- Public Maintenance Queue Table -->
+                    <div class="glass-panel glass-surface border border-glass-border rounded-xl shadow-lg p-6">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                            <div>
+                                <h3 class="font-headline-md text-headline-md font-black text-primary">Public Maintenance Queue</h3>
+                                <p class="font-body-sm text-body-sm text-on-surface-variant">Prioritized by AI Urgency Score</p>
+                            </div>
+                            <div class="flex items-center gap-4 overflow-x-auto pb-2 md:pb-0">
+                                <div class="flex items-center space-x-2 bg-surface-container border border-outline-variant px-3 py-1.5 rounded-full text-xs font-semibold text-primary">
+                                    <span class="text-[10px] font-technical-label uppercase text-on-surface-variant">🤖 AI Priority Sort</span>
+                                    <input type="checkbox" id="ai-sort-toggle" onchange="toggleAISort()" class="w-4 h-4 rounded text-secondary focus:ring-secondary cursor-pointer">
+                                </div>
+                                <span class="text-technical-label font-technical-label text-on-surface-variant mr-2">FILTER:</span>
+                                <button id="filter-btn-critical" onclick="filterSeverity('CRITICAL')" class="px-3 py-1 rounded-full border border-error/30 hover:bg-error/25 transition-colors bg-transparent text-error font-technical-label text-technical-label">CRITICAL</button>
+                                <button id="filter-btn-high" onclick="filterSeverity('HIGH')" class="px-3 py-1 rounded-full border border-status-assigned/30 hover:bg-status-assigned/25 transition-colors bg-transparent text-status-assigned font-technical-label text-technical-label">HIGH</button>
+                                <button id="filter-btn-all" onclick="filterSeverity('ALL')" class="px-3 py-1 rounded-full border border-outline-variant bg-surface-variant text-on-surface-variant font-technical-label text-technical-label hover:bg-outline-variant transition-colors font-bold">ALL</button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="border-b border-glass-border">
+                                    <tr class="font-technical-label text-technical-label text-outline uppercase">
+                                        <th class="py-4 px-2">Incident Details</th>
+                                        <th class="py-4 px-2">Location</th>
+                                        <th class="py-4 px-2">AI Severity</th>
+                                        <th class="py-4 px-2">Status</th>
+                                        <th class="py-4 px-2">Assigned Crew</th>
+                                        <th class="py-4 px-2 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="incidents-tbody" class="font-body-sm text-body-sm divide-y divide-glass-border/30">
+                                    <!-- Dynamic rows loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- Right Sidebar / Inspection Panel -->
+                <div class="space-y-6" id="inspectionPanel">
+                    <!-- Dynamic details and timelines injected here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Navigation Shell -->
+    <footer class="md:hidden fixed bottom-0 w-full z-50 bg-glass-surface backdrop-blur-md border-t border-glass-border flex justify-around items-center h-16 px-4">
+        <a href="index.html" class="flex flex-col items-center gap-1 text-on-surface-variant">
+            <span class="material-symbols-outlined">dataset</span>
+            <span class="text-[10px] font-bold">Simulator</span>
+        </a>
+        <a href="report.html" class="flex flex-col items-center gap-1 text-on-surface-variant">
+            <span class="material-symbols-outlined">account_circle</span>
+            <span class="text-[10px] font-bold">Citizen</span>
+        </a>
+        <a href="manager.html" class="flex flex-col items-center gap-1 text-secondary">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span class="text-[10px] font-bold">Manager</span>
+        </a>
+        <a href="admin.html" class="flex flex-col items-center gap-1 text-on-surface-variant">
+            <span class="material-symbols-outlined">security</span>
+            <span class="text-[10px] font-bold">Admin</span>
+        </a>
+    </footer>
+
+    <!-- ═══════════════ TABLE LOGIC JAVASCRIPT ═══════════════ -->
+    <script>
+        const PRESET_ISSUES = [
+            { id: 'pres-1', title: 'Deep Pothole #RD-1142', location: 'Ward 7 · MG Road & 5th Cross', category: 'Road Damage', severity: 'Critical', status: 'Reported', crew: 'Unassigned', icon: '🕳️', severityVal: 4, attachments: {"text": true, "image": true, "voice": true}, gps: "12.971598, 77.594562" },
+            { id: 'pres-2', title: 'Pipe Leak #WL-0388', location: 'Ward 3 · Park Ave Jn.', category: 'Water Infrastructure', severity: 'Critical', status: 'Reported', crew: 'Unassigned', icon: '💧', severityVal: 4, attachments: {"text": true, "image": true, "voice": false}, gps: "12.972300, 77.594800" },
+            { id: 'pres-3', title: 'Clogged Drain #DR-2771', location: 'Ward 11 · Elm Rd, Corner', category: 'Drainage System', severity: 'High', status: 'Reported', crew: 'Unassigned', icon: '🌊', severityVal: 3, attachments: {"text": true, "image": false, "voice": true}, gps: "12.973100, 77.593900" },
+            { id: 'pres-4', title: 'Lamp Fault #SL-4829', location: 'Ward 12 · Main St & 3rd Ave', category: 'Public Lighting', severity: 'High', status: 'Reported', crew: 'Unassigned', icon: '💡', severityVal: 3, attachments: {"text": true, "image": false, "voice": false}, gps: "12.975000, 77.591000" },
+            { id: 'pres-5', title: 'Crack Report #CI-0519', location: 'Ward 4 · Industrial Blvd', category: 'Civil Infrastructure', severity: 'Moderate', status: 'Reported', crew: 'Unassigned', icon: '⚠️', severityVal: 2, attachments: {"text": true, "image": true, "voice": false}, gps: "12.968000, 77.595000" },
+            { id: 'pres-6', title: 'Overflow Bin #GC-3344', location: 'Ward 9 · Nehru Park Gate', category: 'Sanitation', severity: 'Low', status: 'Reported', crew: 'Unassigned', icon: '🗑️', severityVal: 1, attachments: {"text": true, "image": false, "voice": false}, gps: "12.972000, 77.598000" }
+        ];
+
+        let incidentsList = [];
+        let ws;
+        let severityFilter = 'ALL';
+        let activeInspectId = null;
+
+        function connectWebSocket() {
+            ws = new WebSocket('ws://127.0.0.1:8000/api/ws');
+            ws.onmessage = function(event) {
+                const msg = JSON.parse(event.data);
+                console.log("WebSocket event received:", msg);
+                
+                if (msg.type === "INCIDENT_NEW" || msg.type === "incident_assigned" || msg.type === "incident_resolved" || msg.type === "incident_escalated" || msg.type === "INCIDENT_UPDATE") {
+                    const inc = msg.data;
+                    const index = incidentsList.findIndex(item => item.id === inc.id);
+                    const formatted = {
+                        id: inc.id,
+                        title: inc.title,
+                        location: inc.location,
+                        category: inc.category,
+                        severity: inc.priority,
+                        status: inc.status,
+                        crew: inc.crew,
+                        icon: inc.icon,
+                        attachments: inc.attachments || {"text": true, "image": false, "voice": false},
+                        severityVal: inc.priority === 'Critical' ? 4 : (inc.priority === 'High' ? 3 : (inc.priority === 'Moderate' ? 2 : 1))
+                    };
+
+                    if (index !== -1) {
+                        incidentsList[index] = formatted;
+                    } else {
+                        incidentsList.unshift(formatted);
+                        showToast(`📢 Alert: New incident reported: ${inc.title}`);
+                    }
+                    renderTable();
+                    updateStats();
+                    refreshManagerMapData();
+                    if (activeInspectId === inc.id) {
+                        inspectIncident(activeInspectId);
+                    }
+                }
+            };
+            ws.onclose = function() {
+                console.log("WebSocket disconnected. Reconnecting in 3s...");
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        function loadIncidents() {
+            const localList = localStorage.getItem('hero_incidents_list');
+            if (localList) {
+                incidentsList = JSON.parse(localList);
+            } else {
+                incidentsList = []; // Disable static/mock incident list if empty/active
+                saveIncidents();
+            }
+            renderTable();
+            updateStats();
+            refreshManagerMapData();
+            
+            // Auto-inspect the first item if none is inspected
+            if (!activeInspectId && incidentsList.length > 0) {
+                inspectIncident(incidentsList[0].id);
+            } else if (incidentsList.length === 0) {
+                renderEmptyInspectionPanel();
+            }
+
+            // Sync backend incidents to shared storage if backend is online
+            fetch('http://127.0.0.1:8000/api/incidents')
+            .then(res => {
+                if (!res.ok) throw new Error("Server error");
+                return res.json();
+            })
+            .then(data => {
+                const merged = [...incidentsList];
+                let changed = false;
+                data.forEach(inc => {
+                    if (!merged.some(item => item.id === inc.id)) {
+                        merged.push({
+                            id: inc.id,
+                            title: inc.title,
+                            location: inc.location,
+                            category: inc.category,
+                            severity: inc.priority || inc.severity || "Moderate",
+                            status: inc.status,
+                            crew: inc.crew,
+                            icon: inc.icon,
+                            attachments: inc.attachments || {"text": true, "image": false, "voice": false},
+                            severityVal: inc.priority === 'Critical' ? 4 : (inc.priority === 'High' ? 3 : (inc.priority === 'Moderate' ? 2 : 1))
+                        });
+                        changed = true;
+                    }
+                });
+                if (changed) {
+                    incidentsList = merged;
+                    saveIncidents();
+                    renderTable();
+                    updateStats();
+                    refreshManagerMapData();
+                }
+            })
+            .catch(err => {
+                console.warn("Backend offline when syncing manager queue:", err);
+            });
+
+            if (!ws) {
+                connectWebSocket();
+            }
+        }
+
+        function saveIncidents() {
+            localStorage.setItem('hero_incidents_list', JSON.stringify(incidentsList));
+        }
+
+        function resetData() {
+            localStorage.removeItem('hero_incidents_list');
+            fetch('http://127.0.0.1:8000/api/reset', { method: 'POST' })
+            .then(() => {
+                loadIncidents();
+                showToast("Demo Queue successfully reset!");
+            })
+            .catch(() => {
+                loadIncidents();
+                showToast("Demo Queue successfully reset (local)!");
+            });
+        }
+
+        function toggleAISort() {
+            renderTable();
+        }
+
+        function filterSeverity(sev) {
+            severityFilter = sev;
+            
+            const btnCritical = document.getElementById('filter-btn-critical');
+            const btnHigh = document.getElementById('filter-btn-high');
+            const btnAll = document.getElementById('filter-btn-all');
+            
+            btnCritical.className = "px-3 py-1 rounded-full border border-error/30 hover:bg-error/25 transition-colors bg-transparent text-error font-technical-label text-technical-label";
+            btnHigh.className = "px-3 py-1 rounded-full border border-status-assigned/30 hover:bg-status-assigned/25 transition-colors bg-transparent text-status-assigned font-technical-label text-technical-label";
+            btnAll.className = "px-3 py-1 rounded-full border border-outline-variant bg-transparent text-on-surface-variant font-technical-label text-technical-label hover:bg-outline-variant/30 transition-colors";
+            
+            if (sev === 'CRITICAL') {
+                btnCritical.className = "px-3 py-1 rounded-full border border-error/30 transition-colors bg-error/20 text-error font-technical-label text-technical-label font-bold";
+            } else if (sev === 'HIGH') {
+                btnHigh.className = "px-3 py-1 rounded-full border border-status-assigned/30 transition-colors bg-status-assigned/20 text-status-assigned font-technical-label text-technical-label font-bold";
+            } else {
+                btnAll.className = "px-3 py-1 rounded-full border border-outline-variant bg-surface-variant text-on-surface-variant font-technical-label text-technical-label font-bold";
+            }
+            
+            renderTable();
+        }
+
+        function updateStats() {
+            const active = incidentsList.filter(inc => inc.status !== 'Resolved').length;
+            const resolved = incidentsList.filter(inc => inc.status === 'Resolved').length + 128;
+            document.getElementById('stat-active').textContent = active;
+            document.getElementById('stat-resolved').textContent = resolved;
+        }
+
+        function showToast(text) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-text').textContent = text;
+            
+            toast.classList.remove('translate-y-12', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-12', 'opacity-0', 'pointer-events-none');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3000);
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('incidents-tbody');
+            tbody.innerHTML = '';
+
+            let listToRender = [...incidentsList];
+
+            const aiSortActive = document.getElementById('ai-sort-toggle').checked;
+            if (aiSortActive) {
+                listToRender.sort((a, b) => b.severityVal - a.severityVal);
+            }
+
+            if (severityFilter !== 'ALL') {
+                listToRender = listToRender.filter(inc => inc.severity.toUpperCase() === severityFilter);
+            }
+
+            listToRender.forEach(inc => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-surface-variant/10 transition-colors group";
+                
+                let sevClass = "bg-surface-variant text-on-surface-variant font-status-badge text-status-badge";
+                if (inc.severity === "Critical") {
+                    sevClass = "bg-error text-white font-status-badge text-status-badge pulse-glow-red";
+                } else if (inc.severity === "High") {
+                    sevClass = "bg-status-assigned text-white font-status-badge text-status-badge pulse-glow-orange";
+                } else if (inc.severity === "Moderate") {
+                    sevClass = "bg-status-verified text-white font-status-badge text-status-badge";
+                }
+
+                let statusHtml = '';
+                if (inc.status === "Reported") {
+                    statusHtml = `<span class="flex items-center gap-1.5 font-technical-label text-technical-label text-error">
+                        <span class="w-1.5 h-1.5 bg-error rounded-full animate-ping"></span> UNASSIGNED
+                    </span>`;
+                } else if (inc.status === "Verified") {
+                    statusHtml = `<span class="flex items-center gap-1.5 font-technical-label text-technical-label text-status-verified">
+                        <span class="w-1.5 h-1.5 bg-status-verified rounded-full"></span> ASSIGNED
+                    </span>`;
+                } else if (inc.status === "Assigned") {
+                    statusHtml = `<span class="flex items-center gap-1.5 font-technical-label text-technical-label text-status-assigned">
+                        <span class="w-1.5 h-1.5 bg-status-assigned rounded-full"></span> WORKER DISPATCHED
+                    </span>`;
+                } else {
+                    statusHtml = `<span class="flex items-center gap-1.5 font-technical-label text-technical-label text-status-resolved">
+                        <span class="w-1.5 h-1.5 bg-status-resolved rounded-full"></span> RESOLVED
+                    </span>`;
+                }
+
+                let crewHtml = inc.crew && inc.crew !== "Unassigned" ? `
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-full bg-category-road/20 flex items-center justify-center text-[10px] font-bold">${inc.crew.substring(0,2)}</div>
+                        <span class="text-xs">${inc.crew}</span>
+                    </div>
+                ` : '<span class="text-on-surface-variant">—</span>';
+
+                let actionBtnHtml = '';
+                if (inc.status === "Resolved") {
+                    actionBtnHtml = `<button class="bg-surface-variant text-on-surface-variant px-3 py-1.5 rounded-lg font-bold text-xs cursor-default">RESOLVED</button>`;
+                } else if (inc.status === "Assigned") {
+                    actionBtnHtml = `<button class="bg-surface-variant text-on-surface-variant px-3 py-1.5 rounded-lg font-bold text-xs cursor-default" disabled style="opacity: 0.6;">DISPATCHED</button>`;
+                } else {
+                    // Disable dispatch button if crew is Unassigned (so we must assign first)
+                    const disableDispatch = (inc.crew === "Unassigned") ? 'disabled opacity-50 cursor-not-allowed' : '';
+                    actionBtnHtml = `<button onclick="triggerDispatch('${inc.id}')" ${disableDispatch} class="bg-[#FF6B35] text-white px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-[#e05a2b] transition-colors active:scale-95 shadow-sm">DISPATCH</button>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="py-4 px-2">
+                        <div class="font-bold text-primary flex items-center gap-1.5">
+                            <span class="text-base">${inc.icon || '⚠️'}</span>
+                            <span>${inc.title}</span>
+                        </div>
+                        <div class="text-xs text-on-surface-variant">${inc.category}</div>
+                    </td>
+                    <td class="py-4 px-2 font-technical-label">${inc.location}</td>
+                    <td class="py-4 px-2">
+                        <span class="inline-block px-2 py-0.5 rounded ${sevClass}">${inc.severity.toUpperCase()}</span>
+                    </td>
+                    <td class="py-4 px-2">
+                        ${statusHtml}
+                    </td>
+                    <td class="py-4 px-2 font-technical-label">
+                        ${crewHtml}
+                    </td>
+                    <td class="py-4 px-2 text-right">
+                        <div class="flex justify-end gap-2">
+                            <button onclick="inspectIncident('${inc.id}')" class="p-2 rounded-lg border border-glass-border hover:bg-surface-variant/30 transition-all active:scale-90">
+                                <span class="material-symbols-outlined text-[18px]">visibility</span>
+                            </button>
+                            ${actionBtnHtml}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateIncidentStatus(id, newStatus) {
+            const payload = { status: newStatus };
+            if (newStatus === "Resolved") {
+                payload.crew = "Unassigned";
+            }
+            
+            fetch(`http://127.0.0.1:8000/api/incidents/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Update failed");
+                return res.json();
+            })
+            .then(data => {
+                console.log("Status updated successfully on backend:", data);
+                const index = incidentsList.findIndex(inc => inc.id === id);
+                if (index !== -1) {
+                    incidentsList[index].status = newStatus;
+                    if (newStatus === "Resolved") incidentsList[index].crew = "Unassigned";
+                    saveIncidents();
+                    updateStats();
+                    renderTable();
+                    if (activeInspectId === id) inspectIncident(id);
+                }
+                showToast(`Status updated to ${newStatus}`);
+            })
+            .catch(err => {
+                console.error("Failed to update status on server:", err);
+                const index = incidentsList.findIndex(inc => inc.id === id);
+                if (index !== -1) {
+                    incidentsList[index].status = newStatus;
+                    if (newStatus === "Resolved") incidentsList[index].crew = "Unassigned";
+                    saveIncidents();
+                    updateStats();
+                    renderTable();
+                    if (activeInspectId === id) inspectIncident(id);
+                }
+                showToast(`Local Fallback: Status updated to ${newStatus}`);
+            });
+        }
+
+        function updateIncidentCrew(id, newCrew) {
+            const index = incidentsList.findIndex(inc => inc.id === id);
+            if (index === -1) return;
+            const inc = incidentsList[index];
+            // If crew is assigned, status progresses from UNASSIGNED -> ASSIGNED -> WORKER DISPATCHED
+            const nextStatus = newCrew === "Unassigned" ? "Reported" : "Assigned";
+
+            if (newCrew === "Unassigned") {
+                fetch(`http://127.0.0.1:8000/api/incidents/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ crew: newCrew, status: nextStatus })
+                })
+                .then(res => res.json())
+                .then(() => {
+                    incidentsList[index].crew = newCrew;
+                    incidentsList[index].status = nextStatus;
+                    saveIncidents();
+                    renderTable();
+                    updateStats();
+                    if (activeInspectId === id) inspectIncident(id);
+                })
+                .catch(err => console.error("Error clearing crew:", err));
+                return;
+            }
+
+            fetch('http://127.0.0.1:8000/api/recommend-team', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ category: inc.category, gps: inc.gps || "12.97,77.59" })
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("AI recommendation failed");
+                return res.json().catch(() => ({}));
+            })
+            .then(aiTeam => {
+                if (aiTeam && aiTeam.recommended_crew) {
+                    showToast(`🤖 Recommends: ${aiTeam.recommended_crew}. Reason: ${aiTeam.reason}`);
+                }
+                
+                return fetch(`http://127.0.0.1:8000/api/incidents/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ crew: newCrew, status: nextStatus })
+                });
+            })
+            .then(res => res.json())
+            .then(data => {
+                incidentsList[index].crew = newCrew;
+                incidentsList[index].status = nextStatus;
+                saveIncidents();
+                renderTable();
+                updateStats();
+                if (activeInspectId === id) inspectIncident(id);
+            })
+            .catch(err => {
+                console.warn("Failed to contact recommend-team or backend API:", err);
+                incidentsList[index].crew = newCrew;
+                incidentsList[index].status = nextStatus;
+                saveIncidents();
+                updateStats();
+                renderTable();
+                if (activeInspectId === id) inspectIncident(id);
+                showToast(`Local Fallback: Task assigned to ${newCrew} and dispatched.`);
+            });
+        }
+
+        function triggerDispatch(id) {
+            const index = incidentsList.findIndex(inc => inc.id === id);
+            if (index === -1) return;
+            const crew = incidentsList[index].crew;
+            
+            if (crew === "Unassigned") {
+                showToast("Alert: Please assign a maintenance crew before dispatching!");
+                return;
+            }
+
+            fetch(`http://127.0.0.1:8000/api/incidents/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: "Assigned" })
+            })
+            .then(res => res.json())
+            .then(data => {
+                incidentsList[index].status = "Assigned";
+                saveIncidents();
+                updateStats();
+                renderTable();
+                if (activeInspectId === id) inspectIncident(id);
+                showToast(`Siren Alert: ${crew} dispatched to scene!`);
+            })
+            .catch(err => {
+                console.error("Failed to trigger dispatch on server:", err);
+                incidentsList[index].status = "Assigned";
+                saveIncidents();
+                updateStats();
+                renderTable();
+                if (activeInspectId === id) inspectIncident(id);
+                showToast(`Local Fallback: ${crew} dispatched to scene!`);
+            });
+        }
+
+        // ── Google Maps Supervisor View & Heatmap ──
+        let managerMap = null;
+        let managerHeatmap = null;
+        let managerMarkers = [];
+
+        function initManagerMap() {
+            if (managerMap) {
+                refreshManagerMapData();
+                return;
+            }
+
+            if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyD_WLhgOIaTp45g2YUxKhckbkcyQyS-8fc&libraries=visualization&callback=initManagerMapCallback`;
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+            } else {
+                initManagerMapCallback();
+            }
+        }
+
+        window.initManagerMapCallback = function() {
+            const defaultLatLng = { lat: 12.971598, lng: 77.594562 };
+            const mapEl = document.getElementById('manager-map');
+            if (!mapEl) return;
+
+            managerMap = new google.maps.Map(mapEl, {
+                center: defaultLatLng,
+                zoom: 14,
+                styles: [
+                    {
+                        "featureType": "all",
+                        "elementType": "labels.text.fill",
+                        "stylers": [{"color": "#334155"}]
+                    }
+                ]
+            });
+
+            refreshManagerMapData();
+        };
+
+        function refreshManagerMapData() {
+            if (!managerMap) return;
+
+            managerMarkers.forEach(m => m.setMap(null));
+            managerMarkers = [];
+
+            if (managerHeatmap) {
+                managerHeatmap.setMap(null);
+                managerHeatmap = null;
+            }
+
+            const mapPoints = incidentsList;
+            if (!mapPoints || mapPoints.length === 0) return;
+
+            const heatmapPoints = [];
+            const usedCoords = {};
+
+            mapPoints.forEach(inc => {
+                let lat = 12.971598;
+                let lng = 77.594562;
+                try {
+                    if (inc.gps) {
+                        const parts = inc.gps.split(',');
+                        lat = parseFloat(parts[0]);
+                        lng = parseFloat(parts[1]);
+                    }
+                } catch (e) {}
+
+                // Jitter key based on 5 decimal places (~1 meter)
+                const coordKey = `${lat.toFixed(5)},${lng.toFixed(5)}`;
+                if (usedCoords[coordKey]) {
+                    const count = usedCoords[coordKey];
+                    const angle = count * 0.9; // spiral pattern
+                    const radius = 0.00015 * Math.sqrt(count); // ~15 meters per step
+                    lat += radius * Math.cos(angle);
+                    lng += radius * Math.sin(angle);
+                    usedCoords[coordKey]++;
+                } else {
+                    usedCoords[coordKey] = 1;
+                }
+
+                const latLng = new google.maps.LatLng(lat, lng);
+
+                let weight = 1;
+                if (inc.severity === "Critical") weight = 4;
+                else if (inc.severity === "High") weight = 3;
+                else if (inc.severity === "Moderate") weight = 2;
+                else if (inc.severity === "Low") weight = 1;
+
+                heatmapPoints.push({
+                    location: latLng,
+                    weight: weight
+                });
+
+                const marker = new google.maps.Marker({
+                    position: latLng,
+                    map: managerMap,
+                    title: inc.title,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: inc.severity === "Critical" ? "#ba1a1a" : (inc.severity === "High" ? "#FF6B35" : (inc.severity === "Low" ? "#76777d" : "#F59E0B")),
+                        fillOpacity: 0.9,
+                        strokeColor: "#FFFFFF",
+                        strokeWeight: 2
+                    }
+                });
+
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `
+                        <div class="p-2 font-sans" style="max-width: 200px;">
+                            <div class="flex items-center space-x-1.5 mb-1">
+                                <span class="text-base">${inc.icon || '⚠️'}</span>
+                                <span class="font-extrabold text-[10px] text-slate-400 uppercase tracking-wider">${inc.category}</span>
+                            </div>
+                            <h4 class="font-black text-slate-900 text-xs">${inc.title}</h4>
+                            <p class="text-[10px] text-slate-500 mt-0.5">${inc.location}</p>
+                            <button onclick="inspectIncident('${inc.id}')" class="mt-2 text-[9px] font-black uppercase text-secondary hover:underline">Inspect Details</button>
+                        </div>
+                    `
+                });
+
+                marker.addListener('click', () => {
+                    infoWindow.open(managerMap, marker);
+                });
+
+                managerMarkers.push(marker);
+            });
+
+            if (heatmapPoints.length > 0 && typeof google.maps.visualization !== 'undefined') {
+                managerHeatmap = new google.maps.visualization.HeatmapLayer({
+                    data: heatmapPoints,
+                    map: managerMap,
+                    radius: 25
+                });
+            }
+        }
+
+        // ── Inspection Panel Controller ──
+        function renderEmptyInspectionPanel() {
+            const panel = document.getElementById('inspectionPanel');
+            panel.innerHTML = `
+                <div class="glass-panel glass-surface p-8 rounded-xl border border-glass-border shadow-lg text-center flex flex-col items-center justify-center min-h-[400px]">
+                    <span class="material-symbols-outlined text-[64px] text-on-surface-variant/40 mb-4" style="font-variation-settings: 'FILL' 0;">find_in_page</span>
+                    <h4 class="font-headline-md text-headline-md font-black text-primary mb-2">No Incident Selected</h4>
+                    <p class="text-sm text-on-surface-variant leading-relaxed max-w-xs">Click the visibility/inspect button <span class="inline-block p-1 bg-surface-variant/30 rounded"><span class="material-symbols-outlined text-sm align-middle">visibility</span></span> on any incident in the queue to load AI diagnostics, recommend crews, and dispatch teams.</p>
+                </div>
+            `;
+        }
+
+        window.inspectIncident = function(id) {
+            activeInspectId = id;
+            
+            fetch(`http://127.0.0.1:8000/api/incidents`)
+            .then(res => res.json())
+            .then(incidents => {
+                const inc = incidents.find(item => item.id === id);
+                if (!inc) return;
+                renderInspectionPanel(inc);
+            })
+            .catch(err => {
+                console.error("Failed to fetch ticket inspect details:", err);
+                const inc = incidentsList.find(item => item.id === id);
+                if (inc) {
+                    renderInspectionPanel(inc);
+                }
+            });
+        };
+
+        function getAIRecommendation(inc) {
+            const category = (inc.category || "").toLowerCase();
+            const severity = (inc.severity || "Moderate").toLowerCase();
+            
+            let recommendedTeam = "Team Alpha";
+            let displayName = "Team Alpha (Road Crew Alpha + Asphalt Team)";
+            let eta = 10;
+            let confidence = 85;
+            let reason = "";
+            let tools = [];
+            
+            if (category.includes("road") || category.includes("pothole") || category.includes("crack") || category.includes("civil")) {
+                recommendedTeam = "Team Alpha";
+                displayName = "Team Alpha (Road Crew Alpha + Asphalt Team)";
+                eta = severity === "critical" ? 4 : (severity === "high" ? 7 : 12);
+                confidence = severity === "critical" ? 94 : 88;
+                tools = ["Asphalt Roller", "Road Patching Kit", "Safety Cones"];
+                reason = `Closest available crew (${eta} mins away) equipped with required tools (${tools.join(", ")}). Availability: Active & On-Duty.`;
+            } else if (category.includes("water") || category.includes("pipe") || category.includes("leak") || category.includes("drain")) {
+                recommendedTeam = "Team Beta";
+                displayName = "Team Beta (Pipeline Crew Beta)";
+                eta = severity === "critical" ? 5 : (severity === "high" ? 8 : 14);
+                confidence = severity === "critical" ? 92 : 87;
+                tools = ["Hydraulic Pipe Sealants", "Water Pump Tools", "Shutoff Wrench"];
+                reason = `Specialized pipeline crew. Distance: 1.1km. Equipped with ${tools.join(", ")}. Availability: Available immediately.`;
+            } else if (category.includes("light") || category.includes("lamp") || category.includes("electrical")) {
+                recommendedTeam = "Team Gamma";
+                displayName = "Team Gamma (Electrical Crew Gamma)";
+                eta = severity === "critical" ? 6 : (severity === "high" ? 9 : 13);
+                confidence = severity === "critical" ? 91 : 86;
+                tools = ["High-Elevation Cherry Picker", "Volt Meter", "Replacement LED Bulbs"];
+                reason = `Equipped with elevation cherry pickers and standard electrical rigging. Distance: 1.8km. Availability: On standby.`;
+            } else if (category.includes("sanitation") || category.includes("bin") || category.includes("garbage") || category.includes("refuse")) {
+                recommendedTeam = "Team Delta";
+                displayName = "Team Delta (Sanitation Team Delta)";
+                eta = severity === "critical" ? 7 : (severity === "high" ? 11 : 16);
+                confidence = severity === "critical" ? 89 : 83;
+                tools = ["Garbage Compactor Truck", "Industrial Bin Lifter", "Disinfectant Spray"];
+                reason = `Dedicated compactor vehicle covering this ward sector. Distance: 2.3km. Equipped with ${tools.join(", ")}. Availability: Route active.`;
+            } else {
+                recommendedTeam = "Team Alpha";
+                displayName = "Team Alpha";
+                eta = 15;
+                confidence = 75;
+                reason = "General maintenance unit with standard toolbox. Distance: 3.5km. Availability: In depot.";
+            }
+            
+            return {
+                recommendedTeam,
+                displayName,
+                eta,
+                confidence,
+                reason
+            };
+        }
+
+        function renderInspectionPanel(inc) {
+            const panel = document.getElementById('inspectionPanel');
+            
+            let aiSeverityProb = "75%";
+            let resNeeded = "Standard Crew";
+            let estCompletion = "120 Mins";
+            const aiRec = getAIRecommendation(inc);
+            
+            const categoryLower = (inc.category || "").toLowerCase();
+            if (categoryLower.includes("water") || categoryLower.includes("pipe") || categoryLower.includes("leak")) {
+                resNeeded = "Heavy Hydraulics / Plumbing Specialist";
+                estCompletion = "140 Mins";
+            } else if (categoryLower.includes("road") || categoryLower.includes("pothole") || categoryLower.includes("crack")) {
+                resNeeded = "Road Crew / Asphalt Roller";
+                estCompletion = "180 Mins";
+            } else if (categoryLower.includes("drain") || categoryLower.includes("flood")) {
+                resNeeded = "Suction Pump / Vactor Truck";
+                estCompletion = "150 Mins";
+            } else if (categoryLower.includes("light") || categoryLower.includes("lamp") || categoryLower.includes("electrical")) {
+                resNeeded = "Bucket Truck / Electrician";
+                estCompletion = "60 Mins";
+            } else {
+                resNeeded = "General Maintenance";
+                estCompletion = "90 Mins";
+            }
+            
+            const priorityLower = (inc.severity || "Moderate").toLowerCase();
+            if (priorityLower === "critical") {
+                aiSeverityProb = "92% probability";
+            } else if (priorityLower === "high") {
+                aiSeverityProb = "84% probability";
+            } else if (priorityLower === "moderate") {
+                aiSeverityProb = "62% probability";
+            } else {
+                aiSeverityProb = "25% probability";
+            }
+
+            let commentsHtml = '';
+            const comments = inc.comments || [];
+            if (comments.length === 0) {
+                commentsHtml = '<p class="text-on-surface-variant italic text-xs">No supervisor comments logged yet.</p>';
+            } else {
+                comments.forEach(comment => {
+                    commentsHtml += `
+                        <div class="bg-surface-container p-2.5 rounded-lg border border-glass-border">
+                            <p class="text-xs text-primary leading-relaxed font-semibold">${comment}</p>
+                        </div>
+                    `;
+                });
+            }
+
+            let auditHtml = '';
+            const workflow = inc.agent_workflow || [
+                {"agent": "Issue Analysis Agent", "log": `Processed title. Classified category as ${inc.category}.`},
+                {"agent": "Priority Agent", "log": `Assessed combined severity score as ${inc.severity || "Moderate"}.`},
+                {"agent": "Assignment Agent", "log": `Allocated ticket queue.`}
+            ];
+            workflow.forEach(wf => {
+                auditHtml += `
+                    <div class="bg-white/5 border border-white/10 p-2.5 rounded flex items-start gap-2">
+                        <span class="font-extrabold text-white text-[11px] min-w-[110px]">${wf.agent}:</span>
+                        <span class="text-on-tertiary-container text-[11px] font-medium">${wf.log}</span>
+                    </div>
+                `;
+            });
+
+            let attachmentsHtml = '';
+            const atts = inc.attachments || {"text": false, "image": false, "voice": false};
+            
+            // Retrieve local base64 media
+            const localMedia = JSON.parse(localStorage.getItem('hero_media_' + inc.id) || '{}');
+            
+            const hasText = atts.text && inc.description;
+            const hasImage = atts.image && localMedia.image;
+            const hasVoice = atts.voice && localMedia.voice;
+            
+            const hasAttachments = hasText || hasImage || hasVoice;
+            
+            if (!hasAttachments) {
+                attachmentsHtml = '<p class="text-xs text-on-surface-variant italic">No evidence attached</p>';
+            } else {
+                attachmentsHtml = '<div class="space-y-4 w-full">';
+                
+                const uploadTime = inc.timestamp ? new Date(inc.timestamp).toLocaleString() : "Recently uploaded";
+                
+                attachmentsHtml += `
+                    <div class="flex items-center justify-between text-[10px] text-slate-400 font-mono-ui pb-2 border-b border-glass-border">
+                        <span class="font-bold text-secondary uppercase">Citizen Evidence</span>
+                        <span>${uploadTime}</span>
+                    </div>
+                `;
+                
+                if (hasText) {
+                    attachmentsHtml += `
+                        <div class="bg-surface-container/40 p-3 rounded-xl border border-glass-border">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-primary font-mono-ui">📝 Text Description</span>
+                                <button type="button" onclick="toggleExpandText(this)" class="text-[10px] text-secondary font-bold hover:underline focus:outline-none">Expand</button>
+                            </div>
+                            <p class="text-xs font-semibold text-primary leading-relaxed mt-2 line-clamp-2 transition-all duration-300">
+                                ${inc.description}
+                            </p>
+                        </div>
+                    `;
+                }
+                
+                if (hasImage) {
+                    attachmentsHtml += `
+                        <div class="bg-surface-container/40 p-3 rounded-xl border border-glass-border">
+                            <span class="text-[10px] font-bold text-primary font-mono-ui block mb-2">🖼️ Image Attachment</span>
+                            <div class="relative w-24 h-24 rounded-lg overflow-hidden border border-glass-border group cursor-pointer" onclick="openImagePreview('${localMedia.image}')">
+                                <img src="${localMedia.image}" alt="Evidence" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <span class="material-symbols-outlined text-white text-sm">zoom_in</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                if (hasVoice) {
+                    attachmentsHtml += `
+                        <div class="bg-surface-container/40 p-3 rounded-xl border border-glass-border">
+                            <span class="text-[10px] font-bold text-primary font-mono-ui block mb-2">🎙️ Audio Memo</span>
+                            <audio controls class="w-full h-8 rounded-lg" style="outline: none;">
+                                <source src="${localMedia.voice}">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                    `;
+                }
+                
+                attachmentsHtml += '</div>';
+            }
+
+            let timelineHtml = '';
+            const statusLower = (inc.status || "").toLowerCase();
+            
+            timelineHtml += `
+                <div class="relative pl-8">
+                    <div class="absolute left-0 w-5 h-5 bg-status-resolved rounded-full border-4 border-white shadow-sm"></div>
+                    <p class="text-xs font-technical-label text-status-resolved uppercase">Reported</p>
+                    <p class="text-sm font-bold text-primary">Citizen Ticket Submitted</p>
+                    <p class="text-xs text-on-surface-variant">Incident reported at ${inc.location}.</p>
+                </div>
+            `;
+            
+            if (statusLower === "verified" || statusLower === "assigned" || statusLower === "resolved") {
+                timelineHtml += `
+                    <div class="relative pl-8">
+                        <div class="absolute left-0 w-5 h-5 bg-status-resolved rounded-full border-4 border-white shadow-sm"></div>
+                        <p class="text-xs font-technical-label text-status-resolved uppercase">Verified</p>
+                        <p class="text-sm font-bold text-primary">AI Diagnostic Analysis</p>
+                        <p class="text-xs text-on-surface-variant">Validated classification and priority level.</p>
+                    </div>
+                `;
+            } else {
+                timelineHtml += `
+                    <div class="relative pl-8 opacity-50">
+                        <div class="absolute left-[2px] w-4 h-4 bg-outline rounded-full border-[3px] border-white shadow-sm"></div>
+                        <p class="text-xs font-technical-label text-outline uppercase">Pending</p>
+                        <p class="text-sm font-bold text-on-surface-variant">AI Diagnostic Verification</p>
+                    </div>
+                `;
+            }
+            
+            const hasCrew = inc.crew && inc.crew !== "Unassigned";
+            if (hasCrew || statusLower === "assigned" || statusLower === "resolved") {
+                timelineHtml += `
+                    <div class="relative pl-8">
+                        <div class="absolute left-0 w-5 h-5 bg-status-resolved rounded-full border-4 border-white shadow-sm"></div>
+                        <p class="text-xs font-technical-label text-status-resolved uppercase">Assigned</p>
+                        <p class="text-sm font-bold text-primary">Crew Allocated: ${inc.crew || 'Municipal Team'}</p>
+                        <p class="text-xs text-on-surface-variant">Work order active on telemetry.</p>
+                    </div>
+                `;
+            } else {
+                timelineHtml += `
+                    <div class="relative pl-8 opacity-50">
+                        <div class="absolute left-[2px] w-4 h-4 bg-outline rounded-full border-[3px] border-white shadow-sm"></div>
+                        <p class="text-xs font-technical-label text-outline uppercase">Pending</p>
+                        <p class="text-sm font-bold text-on-surface-variant">Crew Dispatch</p>
+                    </div>
+                `;
+            }
+            
+            if (statusLower === "resolved") {
+                timelineHtml += `
+                    <div class="relative pl-8">
+                        <div class="absolute left-0 w-5 h-5 bg-status-resolved rounded-full border-4 border-white shadow-sm"></div>
+                        <p class="text-xs font-technical-label text-status-resolved uppercase">Resolved</p>
+                        <p class="text-sm font-bold text-primary">Work Completed</p>
+                        <p class="text-xs text-on-surface-variant">Supervisor verified and archived ticket.</p>
+                    </div>
+                `;
+            } else if (statusLower === "assigned") {
+                timelineHtml += `
+                    <div class="relative pl-8">
+                        <div class="absolute left-[2px] w-4 h-4 bg-status-assigned rounded-full border-[3px] border-white shadow-sm animate-pulse"></div>
+                        <p class="text-xs font-technical-label text-status-assigned uppercase">Active Work</p>
+                        <p class="text-sm font-bold text-primary">En Route / Repairing</p>
+                        <p class="text-xs text-on-surface-variant">Awaiting resolution confirmation.</p>
+                    </div>
+                `;
+            } else {
+                timelineHtml += `
+                    <div class="relative pl-8 opacity-50">
+                        <div class="absolute left-[2px] w-4 h-4 bg-outline rounded-full border-[3px] border-white shadow-sm"></div>
+                        <p class="text-xs font-technical-label text-outline uppercase">Pending</p>
+                        <p class="text-sm font-bold text-on-surface-variant">Resolution</p>
+                    </div>
+                `;
+            }
+
+            panel.innerHTML = `
+                <!-- AI Intelligence Card -->
+                <div class="glass-panel bg-glass-surface-dark p-6 rounded-xl border border-glass-border shadow-xl text-white">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="font-headline-md text-headline-md font-black flex items-center gap-2">
+                            <span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">psychology</span>
+                            AI Intelligence Card
+                        </h4>
+                        <span class="px-2 py-0.5 bg-on-tertiary-container text-white font-technical-label text-technical-label rounded">PROACTIVE</span>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-4 mb-4">
+                        <p class="text-xs text-on-tertiary-container uppercase tracking-widest mb-1 font-technical-label">Incident Analysis</p>
+                        <p class="text-sm font-body-sm leading-relaxed">
+                            System detects a <span class="text-error font-bold">${aiSeverityProb}</span> of cascading infrastructure failure if ${inc.title} is not managed within SLA duration. Automatic pressure diversion initiated.
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white/5 p-3 rounded-lg border border-white/10">
+                            <p class="text-[10px] text-on-tertiary-container uppercase font-technical-label">Resource Needed</p>
+                            <p class="font-bold text-sm text-secondary">${resNeeded}</p>
+                        </div>
+                        <div class="bg-white/5 p-3 rounded-lg border border-white/10">
+                            <p class="text-[10px] text-on-tertiary-container uppercase font-technical-label">Est. Completion</p>
+                            <p class="font-bold text-sm">${estCompletion}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignment Panel -->
+                <div class="glass-panel glass-surface p-6 rounded-xl border border-glass-border shadow-lg">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="font-headline-md text-headline-md font-black text-primary">Assign Resources</h4>
+                        <span class="text-[10.5px] font-mono-ui font-black uppercase text-secondary bg-secondary/10 px-2 py-0.5 rounded border border-secondary/20">${inc.status}</span>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block font-technical-label text-technical-label text-on-surface-variant uppercase mb-2">Select Primary Crew</label>
+                            <div class="relative">
+                                <select id="inspect-crew-select" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 appearance-none focus:ring-2 focus:ring-secondary focus:border-secondary outline-none font-body-sm">
+                                    <option value="Unassigned" ${inc.crew === 'Unassigned' ? 'selected' : ''}>Select worker or team...</option>
+                                    <option value="Team Alpha" ${inc.crew === 'Team Alpha' ? 'selected' : ''}>Team Alpha</option>
+                                    <option value="Team Beta" ${inc.crew === 'Team Beta' ? 'selected' : ''}>Team Beta</option>
+                                    <option value="Team Gamma" ${inc.crew === 'Team Gamma' ? 'selected' : ''}>Team Gamma</option>
+                                    <option value="Team Delta" ${inc.crew === 'Team Delta' ? 'selected' : ''}>Team Delta</option>
+                                    <option value="Water Works 1" ${inc.crew === 'Water Works 1' ? 'selected' : ''}>Water Works 1</option>
+                                </select>
+                                <span class="material-symbols-outlined absolute right-4 top-3 pointer-events-none text-on-surface-variant">expand_more</span>
+                            </div>
+                            <!-- AI Crew Recommendation Card -->
+                            <div class="mt-3 p-4 bg-secondary-container/10 border border-secondary-container/30 rounded-xl space-y-2 text-primary" id="inspect-ai-recommendation-card">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-1.5 text-xs font-bold text-secondary">
+                                        <span class="material-symbols-outlined text-[18px]">psychology</span>
+                                        AI CREW RECOMMENDATION
+                                    </div>
+                                    <span class="px-2.5 py-0.5 bg-secondary text-white font-technical-label text-[10px] rounded-full font-bold">
+                                        ${aiRec.confidence}% Match
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-start pt-1">
+                                    <div>
+                                        <p class="text-sm font-black text-primary">${aiRec.displayName}</p>
+                                        <p class="text-xs text-on-surface-variant mt-0.5">ETA: <span class="font-bold text-primary">${aiRec.eta} mins</span></p>
+                                    </div>
+                                    <button type="button" onclick="applyRecommendation('${aiRec.recommendedTeam}')" class="px-2.5 py-1 bg-secondary text-white hover:bg-secondary/90 rounded-lg text-[10px] font-bold transition-all uppercase tracking-wider shadow-sm">
+                                        Apply
+                                    </button>
+                                </div>
+                                <p class="text-xs text-on-surface-variant leading-relaxed pt-1.5 border-t border-outline-variant/30">
+                                    <strong>Reason:</strong> ${aiRec.reason}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="confirmAssignment()" class="flex-1 bg-primary text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-black/80 transition-transform active:scale-95 shadow-md">
+                                Confirm Assignment
+                            </button>
+                            ${statusLower !== 'resolved' ? `
+                                <button onclick="updateIncidentStatus('${inc.id}', 'Resolved')" class="bg-status-resolved text-white px-4 py-3 rounded-xl font-bold hover:bg-green-600 transition-transform active:scale-95 shadow-md">
+                                    Resolve
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Citizen Description Card -->
+                <div class="glass-panel glass-surface p-6 rounded-xl border border-glass-border shadow-lg">
+                    <h4 class="font-headline-md text-headline-md font-black text-primary mb-3">Ticket Details</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-mono-ui block">Ticket ID</span>
+                            <p class="text-sm font-bold text-primary">Ticket #${inc.id}</p>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-mono-ui block">Category & Location</span>
+                            <p class="text-sm font-bold text-primary">${inc.category} at ${inc.location}</p>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-mono-ui block">Description</span>
+                            <p class="text-xs font-semibold text-primary leading-relaxed mt-1">${inc.description}</p>
+                        </div>
+                        <div class="pt-2">
+                            <span class="text-[10px] text-slate-400 font-mono-ui block mb-1">Attachments</span>
+                            <div class="flex flex-wrap gap-1.5 mt-1">
+                                ${attachmentsHtml}
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-glass-border flex justify-between items-center text-xs">
+                            <span class="text-on-surface-variant font-technical-label uppercase">Citizen Validation</span>
+                            <span class="px-2 py-1 bg-status-resolved/10 text-status-resolved font-bold rounded-lg">${inc.votes || 12} citizens verified</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Status Timeline -->
+                <div class="glass-panel glass-surface p-6 rounded-xl border border-glass-border shadow-lg">
+                    <h4 class="font-headline-md text-headline-md font-black text-primary mb-6">Live Status Timeline</h4>
+                    <div class="space-y-6 relative before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-px before:bg-outline-variant">
+                        ${timelineHtml}
+                    </div>
+                </div>
+
+                <!-- Supervisor Comments Log -->
+                <div class="glass-panel glass-surface p-6 rounded-xl border border-glass-border shadow-lg">
+                    <h4 class="font-headline-md text-headline-md font-black text-primary mb-3">Supervisor Comments</h4>
+                    <div class="flex gap-2 mb-4">
+                        <input type="text" id="inspect-manager-comment" placeholder="Add a supervisor comment..." class="flex-grow px-3 py-2 bg-surface-container border border-outline-variant rounded-xl text-xs font-semibold text-primary focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary">
+                        <button type="button" onclick="submitManagerComment()" class="bg-primary hover:bg-black/80 text-white px-4 py-2 rounded-xl font-bold text-xs transition shadow-sm active:scale-95">Post</button>
+                    </div>
+                    <div id="inspect-comments-list" class="space-y-2 max-h-36 overflow-y-auto text-xs text-primary font-semibold">
+                        ${commentsHtml}
+                    </div>
+                </div>
+
+                <!-- AI Workflow Audit Card -->
+                <div class="glass-panel bg-glass-surface-dark p-6 rounded-xl border border-glass-border shadow-xl text-white">
+                    <h4 class="font-headline-md text-headline-md font-black flex items-center gap-2 mb-3">
+                        <span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">history</span>
+                        AI Agent Audit Trail
+                    </h4>
+                    <div class="space-y-2 max-h-36 overflow-y-auto text-[10px]" id="inspect-agent-audit-list">
+                        ${auditHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        window.applyRecommendation = function(team) {
+            const select = document.getElementById('inspect-crew-select');
+            if (select) {
+                select.value = team;
+                showToast(`Applied AI Recommendation: Selected ${team}`);
+            }
+        };
+
+        window.toggleExpandText = function(btn) {
+            const p = btn.closest('div').nextElementSibling;
+            if (p.classList.contains('line-clamp-2')) {
+                p.classList.remove('line-clamp-2');
+                btn.textContent = 'Collapse';
+            } else {
+                p.classList.add('line-clamp-2');
+                btn.textContent = 'Expand';
+            }
+        };
+
+        window.openImagePreview = function(imgSrc) {
+            let modal = document.getElementById('evidence-image-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'evidence-image-modal';
+                modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300';
+                modal.innerHTML = `
+                    <div class="relative max-w-3xl w-full bg-transparent flex flex-col items-center">
+                        <button onclick="closeImagePreview()" class="absolute top-[-40px] right-0 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center font-bold text-lg transition-colors">✕</button>
+                        <img id="evidence-modal-img" src="" alt="Evidence Preview" class="max-h-[80vh] max-w-full rounded-2xl shadow-2xl border border-white/10 object-contain">
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) closeImagePreview();
+                });
+            }
+            document.getElementById('evidence-modal-img').src = imgSrc;
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 50);
+        };
+
+        window.closeImagePreview = function() {
+            const modal = document.getElementById('evidence-image-modal');
+            if (modal) {
+                modal.classList.add('opacity-0');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+        };
+
+        window.confirmAssignment = function() {
+            if (!activeInspectId) return;
+            const select = document.getElementById('inspect-crew-select');
+            if (!select) return;
+            const newCrew = select.value;
+            updateIncidentCrew(activeInspectId, newCrew);
+        };
+
+        window.submitManagerComment = function() {
+            if (!activeInspectId) return;
+            const input = document.getElementById('inspect-manager-comment');
+            if (!input) return;
+            const commentText = input.value.trim();
+            if (!commentText) return;
+
+            fetch(`http://127.0.0.1:8000/api/incidents`)
+            .then(res => res.json())
+            .then(incidents => {
+                const inc = incidents.find(item => item.id === activeInspectId);
+                if (!inc) return;
+
+                const comments = inc.comments || [];
+                const formattedComment = `<span class="font-extrabold text-secondary">Supervisor:</span> ${commentText}`;
+                comments.push(formattedComment);
+
+                return fetch(`http://127.0.0.1:8000/api/incidents/${activeInspectId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ comments: comments })
+                });
+            })
+            .then(res => res.json())
+            .then(data => {
+                input.value = '';
+                showToast("Supervisor comment added to timeline.");
+                const index = incidentsList.findIndex(inc => inc.id === activeInspectId);
+                if (index !== -1) {
+                    if (!incidentsList[index].comments) incidentsList[index].comments = [];
+                    const formattedComment = `<span class="font-extrabold text-secondary">Supervisor:</span> ${commentText}`;
+                    incidentsList[index].comments.push(formattedComment);
+                    saveIncidents();
+                }
+                inspectIncident(activeInspectId);
+            })
+            .catch(err => {
+                console.error("Failed to post supervisor comment:", err);
+                const index = incidentsList.findIndex(item => item.id === activeInspectId);
+                if (index !== -1) {
+                    if (!incidentsList[index].comments) incidentsList[index].comments = [];
+                    const formattedComment = `<span class="font-extrabold text-secondary">Supervisor:</span> ${commentText}`;
+                    incidentsList[index].comments.push(formattedComment);
+                    saveIncidents();
+                    inspectIncident(activeInspectId);
+                }
+                showToast("Supervisor comment added to timeline (local fallback).");
+            });
+        };
+
+        window.openHelpModal = function() {
+            let modal = document.getElementById('help-info-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'help-info-modal';
+                modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-300';
+                modal.innerHTML = `
+                    <div class="glass-panel glass-surface p-6 rounded-2xl border border-glass-border shadow-2xl max-w-md w-full text-primary relative bg-white" style="background-color: white; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);">
+                        <button onclick="closeHelpModal()" class="absolute top-4 right-4 text-on-surface-variant hover:text-primary font-bold text-base">✕</button>
+                        <h3 class="font-headline-md text-lg font-black text-primary mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-secondary">help</span>
+                            Community Helper Support
+                        </h3>
+                        <div class="space-y-4 text-xs font-semibold text-on-surface-variant leading-relaxed">
+                            <div>
+                                <h4 class="font-bold text-primary text-sm mb-1">How to Report an Issue</h4>
+                                <p>Citizens can report civic issues like potholes, water leaks, or street light outages from the Citizen Portal. You can attach a text description, upload an image, or record a voice memo to provide evidence.</p>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-primary text-sm mb-1">How Dispatch Works</h4>
+                                <p>Supervisors review incoming tickets in the queue. They can assign a maintenance crew (like Team Alpha or Water Works 1) to the issue. Once confirmed, the team is dispatched, transitioning the status to WORKER DISPATCHED.</p>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-primary text-sm mb-1">Rewards Explanation</h4>
+                                <p>Citizens earn civic reward points for filing valid reports and confirming resolutions. Different priorities yield different point amounts (e.g. Critical reports yield 100 points). Accumulating points unlocks higher civic badges: Bronze Hero, Silver Hero, Gold Hero, and Community Champion.</p>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end">
+                            <button onclick="closeHelpModal()" class="bg-primary text-white hover:bg-black/80 px-4 py-2 rounded-xl font-bold text-xs shadow-sm transition">Close</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+            modal.classList.remove('hidden');
+        };
+
+        window.closeHelpModal = function() {
+            const modal = document.getElementById('help-info-modal');
+            if (modal) modal.classList.add('hidden');
+        };
+
+        window.confirmResetDemo = function() {
+            let modal = document.getElementById('reset-confirm-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'reset-confirm-modal';
+                modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-300';
+                modal.innerHTML = `
+                    <div class="glass-panel glass-surface p-6 rounded-2xl border border-glass-border shadow-2xl max-w-sm w-full text-primary relative bg-white" style="background-color: white; border: 1px solid rgba(0,0,0,0.1);">
+                        <h3 class="font-headline-md text-lg font-black text-primary mb-2 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-error">warning</span>
+                            Reset Demo
+                        </h3>
+                        <p class="text-xs font-semibold text-on-surface-variant mb-6 leading-relaxed">
+                            Are you sure you want to reset the demo data? This will clear all custom incidents and local cached state.
+                        </p>
+                        <div class="flex gap-3 justify-end">
+                            <button onclick="closeResetModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs transition">Cancel</button>
+                            <button onclick="executeResetDemo()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-sm transition">Reset</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+            modal.classList.remove('hidden');
+        };
+
+        window.closeResetModal = function() {
+            const modal = document.getElementById('reset-confirm-modal');
+            if (modal) modal.classList.add('hidden');
+        };
+
+        window.executeResetDemo = function() {
+            closeResetModal();
+            resetData();
+        };
+
+        window.onload = function() {
+            loadIncidents();
+            initManagerMap();
+            setInterval(loadIncidents, 3000);
+        };
+    </script>
+
+    <!-- Toast Notification Element (required by showToast()) -->
+    <div id="toast" class="fixed bottom-6 right-6 z-[9999] transform translate-y-12 opacity-0 pointer-events-none transition-all duration-300 ease-out">
+        <div class="flex items-center gap-3 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-white/10 backdrop-blur-md max-w-xs">
+            <span class="material-symbols-outlined text-secondary text-[20px]" style="font-variation-settings: 'FILL' 1;">notifications</span>
+            <span class="text-xs font-bold leading-snug" id="toast-text">Notification</span>
+        </div>
+    </div>
+</body>
+</html>
