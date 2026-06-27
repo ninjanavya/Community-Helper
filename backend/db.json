@@ -61,7 +61,7 @@
             "location": "GPS Lock \u00b7 Lat: 12.973100, Lng: 77.593900",
             "color": "#0EA5E9",
             "icon": "\ud83c\udf0a",
-            "status": "Verified",
+            "status": "Resolved",
             "crew": "Unassigned",
             "priority": "Critical",
             "confidence": 95.8,
@@ -76,7 +76,8 @@
             "user_uid": "mock-uid-6f026517226e",
             "comments": [
                 "System (Escalation Agent): Priority escalated to Critical due to SLA duration or high community vote count."
-            ]
+            ],
+            "assigned_team": "Unassigned"
         },
         {
             "id": "CI-9902",
@@ -155,6 +156,36 @@
         }
     ],
     "audit_logs": [
+        {
+            "timestamp": "10:04:32",
+            "event": "Incident RD-1142 updated: Status='Assigned', Crew='Team Alpha'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "10:02:43",
+            "event": "Incident DR-2771 updated: Status='Resolved', Crew='Unassigned'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "10:02:38",
+            "event": "Incident DR-2771 updated: Status='Assigned', Crew='Team Beta'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "10:02:34",
+            "event": "Incident DR-2771 updated: Status='Reported', Crew='Unassigned'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "10:00:11",
+            "event": "Incident SL-4829 updated: Status='Assigned', Crew='Team Alpha'",
+            "user": "Manager"
+        },
+        {
+            "timestamp": "10:00:09",
+            "event": "Incident SL-4829 updated: Status='Verified', Crew='Team Alpha'",
+            "user": "Manager"
+        },
         {
             "timestamp": "10:29:07",
             "event": "Incident GC-3344 updated: Status='Verified', Crew='Unassigned'",
