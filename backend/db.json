@@ -37,7 +37,7 @@
             "icon": "\ud83d\udca7",
             "status": "Assigned",
             "crew": "Water Works 1",
-            "priority": "Moderate",
+            "priority": "Critical",
             "confidence": 94.2,
             "gps": "12.972300, 77.594800",
             "timestamp": 1782283177601,
@@ -48,7 +48,10 @@
             },
             "assigned_team": "Water Works 1",
             "reporter_email": "citizen@communityhelper.gov",
-            "user_uid": "mock-uid-6f026517226e"
+            "user_uid": "mock-uid-6f026517226e",
+            "comments": [
+                "System (Escalation Agent): Priority escalated to Critical due to SLA duration or high community vote count."
+            ]
         },
         {
             "id": "DR-2771",
@@ -60,7 +63,7 @@
             "icon": "\ud83c\udf0a",
             "status": "Verified",
             "crew": "Unassigned",
-            "priority": "Moderate",
+            "priority": "Critical",
             "confidence": 95.8,
             "gps": "12.973100, 77.593900",
             "timestamp": 1782279577601,
@@ -70,7 +73,10 @@
                 "voice": true
             },
             "reporter_email": "citizen@communityhelper.gov",
-            "user_uid": "mock-uid-6f026517226e"
+            "user_uid": "mock-uid-6f026517226e",
+            "comments": [
+                "System (Escalation Agent): Priority escalated to Critical due to SLA duration or high community vote count."
+            ]
         },
         {
             "id": "CI-9902",
@@ -82,7 +88,7 @@
             "icon": "\u26a0\ufe0f",
             "status": "Assigned",
             "crew": "Team Alpha",
-            "priority": "High",
+            "priority": "Critical",
             "confidence": 92.1,
             "gps": "12.970200, 77.595100",
             "timestamp": 1782275977601,
@@ -92,7 +98,10 @@
                 "voice": false
             },
             "reporter_email": "citizen@communityhelper.gov",
-            "user_uid": "mock-uid-6f026517226e"
+            "user_uid": "mock-uid-6f026517226e",
+            "comments": [
+                "System (Escalation Agent): Priority escalated to Critical due to SLA duration or high community vote count."
+            ]
         },
         {
             "id": "GC-3344",
@@ -104,7 +113,7 @@
             "icon": "\ud83d\uddd1\ufe0f",
             "status": "Verified",
             "crew": "Unassigned",
-            "priority": "Low",
+            "priority": "Critical",
             "confidence": 98.4,
             "gps": "12.974100, 77.596000",
             "timestamp": 1782272377601,
@@ -116,7 +125,8 @@
             "assigned_team": "Unassigned",
             "reporter_email": "citizen@communityhelper.gov",
             "comments": [
-                "Citizen: ?? Rejected resolution. Issue still exists: road is still bumpy"
+                "Citizen: ?? Rejected resolution. Issue still exists: road is still bumpy",
+                "System (Escalation Agent): Priority escalated to Critical due to SLA duration or high community vote count."
             ],
             "user_uid": "mock-uid-6f026517226e"
         },

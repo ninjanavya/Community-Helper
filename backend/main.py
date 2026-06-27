@@ -81,6 +81,10 @@ async def db_and_role_middleware(request: Request, call_next):
 # ═══════════════════════════════════════════════════
 # GEMINI API INITIALIZATION
 # ═══════════════════════════════════════════════════
+from dotenv import load_dotenv
+# Load .env file relative to main.py path
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+
 USE_GEMINI = False
 genai_client = None
 
