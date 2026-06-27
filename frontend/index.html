@@ -263,14 +263,14 @@
 <!-- BEGIN: Immersive Hero Section -->
 <main class="relative min-h-screen w-full flex flex-col pt-20">
 <!-- Hero Content Overlay -->
-<section class="relative z-20 flex-grow flex flex-col items-center justify-center text-center px-4 pt-12 pb-24 pointer-events-none">
+<section class="relative z-20 flex flex-col items-center justify-center text-center px-4 pt-8 pb-10 pointer-events-none">
 <div class="max-w-4xl pointer-events-auto">
 <h2 class="text-5xl md:text-7xl font-extrabold text-slate-900 mb-4 tracking-tight">
           See a Problem. <br/>
 <span class="text-community-orange">Report It.</span>
 </h2>
 <p class="text-lg md:text-xl text-slate-600 mb-8 max-w-2xl mx-auto font-medium">
-          The AI-powered civic intelligence system that bridges the gap between citizens and city maintenance.
+          Report potholes, water leaks, damaged streetlights and track issue resolution in real time.
         </p>
 <div class="flex flex-col sm:flex-row gap-4 justify-center">
 <button onclick="handlePortalAccess('member', 'report.html')" class="bg-slate-900 text-white px-10 py-4 rounded-custom font-bold text-lg hover:bg-slate-800 transition transform hover:-translate-y-1 shadow-xl">
@@ -280,48 +280,46 @@
             View Live Feed
           </button>
 </div>
+<!-- Inline civic stats -->
+<div class="flex flex-wrap justify-center gap-6 mt-5 text-center">
+  <div class="flex items-center gap-2 text-slate-500 text-sm">
+    <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+    <span><strong class="text-slate-800 font-bold">2,400+</strong> issues resolved</span>
+  </div>
+  <div class="flex items-center gap-2 text-slate-500 text-sm">
+    <span class="w-2 h-2 rounded-full bg-community-orange inline-block"></span>
+    <span><strong class="text-slate-800 font-bold">~2 hrs</strong> avg response time</span>
+  </div>
+  <div class="flex items-center gap-2 text-slate-500 text-sm">
+    <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+    <span><strong class="text-slate-800 font-bold">12 wards</strong> covered live</span>
+  </div>
+</div>
 </div>
 </section>
-<!-- Impact Cards (Floating over simulation) -->
-<div class="absolute inset-0 pointer-events-none overflow-hidden">
-<!-- Card 1 -->
-<div class="absolute top-[25%] left-[5%] glass-panel p-4 rounded-custom shadow-xl w-64 pointer-events-auto transform -rotate-1 hover:rotate-0 transition-transform hidden lg:block">
-<div class="flex items-center gap-3 mb-2">
-<div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
-<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</div>
-<div>
-<p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Resolved</p>
-<p class="text-sm font-bold text-slate-800">Pothole Repaired</p>
-</div>
-</div>
-<p class="text-xs text-slate-500">Fixed within 2 hours of report at 5th Ave.</p>
-</div>
-<!-- Card 2 -->
-<div class="absolute top-[35%] right-[5%] glass-panel p-4 rounded-custom shadow-xl w-64 pointer-events-auto transform rotate-2 hover:rotate-0 transition-transform hidden lg:block">
-<div class="flex items-center gap-3 mb-2">
-<div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
-<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</div>
-<div>
-<p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Impact Score</p>
-<p class="text-sm font-bold text-slate-800">+124 Today</p>
-</div>
-</div>
-<p class="text-xs text-slate-500">Community safety index increased by 4%.</p>
-</div>
-</div>
 
-<!-- BEGIN: Simulator Canvas Section (OVERWRITE WITH PREMIUM TWIN) -->
-<section class="relative h-[440px] w-full bg-white border-t border-b border-slate-100 overflow-hidden" id="city-canvas">
+<!-- BEGIN: Simulator Canvas Section -->
+<section class="relative h-[440px] w-full overflow-hidden" id="city-canvas">
                     
                     <!-- Google Map Container -->
                     <div id="google-map-container" class="absolute inset-0 z-30 hidden bg-white">
                         <div id="real-google-map" class="w-full h-full"></div>
                     </div>
 
+                    <!-- Environmental Blending Vignettes (z-40 overlay masks) -->
+                    <!-- Top blend into hero -->
+                    <div class="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#f7f9fb] via-[#f7f9fb]/80 to-transparent pointer-events-none z-40"></div>
+                    <!-- Bottom blend into Data HUD -->
+                    <div class="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#f7f9fb] via-[#f7f9fb]/80 to-transparent pointer-events-none z-40"></div>
+                    <!-- Left fade vignette -->
+                    <div class="absolute top-0 bottom-0 left-0 w-32 bg-gradient-to-r from-[#f7f9fb] to-transparent pointer-events-none z-40"></div>
+                    <!-- Right fade vignette -->
+                    <div class="absolute top-0 bottom-0 right-0 w-32 bg-gradient-to-l from-[#f7f9fb] to-transparent pointer-events-none z-40"></div>
+
                                 <!-- ═══ CITY INNER (zoom target) ═══ -->
-                <div id="city-inner" class="absolute inset-0 overflow-hidden bg-gradient-to-b from-sky-100 via-sky-50 to-amber-50/40">
+                <div id="city-inner" class="absolute inset-0 overflow-hidden" style="background: linear-gradient(to bottom, #e0f2fe 0%, #f0f9ff 35%, #f8fafc 62%, #e2e8f0 78%, #cbd5e1 85%, #94a3b8 100%);">
+
+
 
                     <!-- Subtle Digital Twin Grid Overlay -->
                     <div class="absolute inset-0 pointer-events-none opacity-[0.04] z-[1]" 
