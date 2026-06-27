@@ -1207,8 +1207,14 @@
             };
         }
 
+        // Stub: saveMediaLocally was referenced but never defined — prevents silent crash
+        async function saveMediaLocally(id) {
+            console.log('[LOG] saveMediaLocally called for id:', id, '(no-op stub)');
+        }
+
         function handleFormSubmit(e) {
             e.preventDefault();
+            console.log('[LOG] Submit clicked');
 
             if (isRecording) stopVoiceAudio();
 
@@ -1233,17 +1239,26 @@
             const controller = new AbortController();
             const timeoutId = setTimeout(() => {
                 controller.abort();
-                console.warn('[Timeout] /api/analyze exceeded 9s — triggering offline fallback.');
+                console.warn('[LOG] TIMEOUT: /api/analyze exceeded 9s — aborting, triggering fallback.');
             }, 9000);
 
             const requestStart = performance.now();
+            console.log('[LOG] Before fetch /api/analyze');
 
-            fetch('http://127.0.0.1:8000/api/analyze', { method: 'POST', body: formData, signal: controller.signal })
-            .then(res => { if (!res.ok) throw new Error("API analysis failed"); return res.json(); })
+            fetch('http://127.0.0.1:8000/api/analyze', {
+                method: 'POST',
+                body: formData,
+                signal: controller.signal,
+                headers: { 'x-user-role': 'member' }
+            })
+            .then(res => {
+                console.log('[LOG] fetch /api/analyze raw response — status:', res.status, 'ok:', res.ok);
+                if (!res.ok) throw new Error("API analysis failed: HTTP " + res.status);
+                return res.json();
+            })
             .then(async (aiResult) => {
                 clearTimeout(timeoutId);
-                console.log(`[Timing] /api/analyze responded in ${(performance.now() - requestStart).toFixed(0)}ms`);
-                console.log("Gemini AI Analysis Result:", aiResult);
+                console.log(`[LOG] /api/analyze JSON parsed — ${(performance.now() - requestStart).toFixed(0)}ms`, aiResult);
 
                 const generatedId = aiResult.id || "RD-" + Math.floor(1000 + Math.random() * 9000);
 
@@ -1285,27 +1300,34 @@
                     localStorage.setItem('hero_incidents_list', JSON.stringify(localList));
                 }
 
+                console.log('[LOG] Before saveMediaLocally');
                 await saveMediaLocally(savePayload.id);
+                console.log('[LOG] After saveMediaLocally — posting to /api/incidents');
 
                 return fetch('http://127.0.0.1:8000/api/incidents', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'x-user-role': 'member' },
                     body: JSON.stringify(savePayload)
                 })
             })
-            .then(res => { if (!res.ok) throw new Error("Incident saving failed"); return res.json(); })
+            .then(res => {
+                console.log('[LOG] /api/incidents raw response — status:', res.status, 'ok:', res.ok);
+                if (!res.ok) throw new Error("Incident saving failed: HTTP " + res.status);
+                return res.json();
+            })
             .then(savedInc => {
-                console.log("Incident successfully saved to database:", savedInc);
+                console.log('[LOG] Incident saved:', savedInc);
                 localStorage.setItem('active_citizen_incident_id', savedInc.id);
 
-                // Always clear loader before redirect
+                console.log('[LOG] Before hiding loader');
                 document.getElementById('loading-container').classList.add('hidden');
+                console.log('[LOG] Loader hidden — redirecting to citizen.html');
 
                 setTimeout(() => { window.location.href = 'citizen.html?ticket=' + savedInc.id; }, 1000);
 
                 fetch('http://127.0.0.1:8000/api/duplicate-check', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'x-user-role': 'member' },
                     body: JSON.stringify({ title, description: desc, gps: `${lat}, ${lng}` })
                 })
                 .then(dRes => dRes.json())
@@ -1322,10 +1344,12 @@
             })
             .catch(async (err) => {
                 clearTimeout(timeoutId);
+                console.error('[LOG] CATCH block — error name:', err.name, '— message:', err.message, '— full err:', err);
+
                 if (err.name === 'AbortError') {
-                    console.warn('[Fallback] Timeout triggered — running offline rule-based analysis.');
+                    console.warn('[LOG] AbortError: timeout fired, running offline fallback.');
                 } else {
-                    console.warn("Backend error. Falling back to local offline simulation.", err);
+                    console.warn('[LOG] Backend/network error. Running offline fallback.');
                 }
                 
                 const ruleResult = mock_rule_based_analysis_js(title, desc);
@@ -1367,16 +1391,19 @@
                     localStorage.setItem('hero_incidents_list', JSON.stringify(mockInc));
                 }
 
+                console.log('[LOG] Before saveMediaLocally in fallback');
                 await saveMediaLocally(mockInc.id);
 
                 localStorage.setItem('active_citizen_incident_id', mockInc.id);
                 localStorage.setItem('offline_incident_data', JSON.stringify(mockInc));
                 
+                console.log('[LOG] Calling showIncidentDashboard (fallback)');
                 setTimeout(() => {
                     showIncidentDashboard(mockInc);
                 }, 1000);
             });
         }
+
 
         function resetStepperTimeline() {
             // Reset progress bar
