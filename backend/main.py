@@ -16,7 +16,7 @@ from PIL import Image
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("CommunityHelperAPI")
 
-app = FastAPI(title="Community Helper - Google-First Smart City Backend")
+
 
 # Enable CORS
 app.add_middleware(
@@ -1043,6 +1043,7 @@ def predict_resolution(payload: PredictResolutionRequest):
         "formatted_estimate": days,
         "confidence": 94.2
     }
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 # ═══════════════════════════════════════════════════
 # ANALYTICS & AUDIT LOGS
