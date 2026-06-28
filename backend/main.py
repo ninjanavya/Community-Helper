@@ -510,13 +510,24 @@ def read_root():
 
 @app.get("/api/incidents")
 async def get_incidents():
+    logger.info("[DIAG] GET /api/incidents called. USE_FIREBASE=%s", USE_FIREBASE)
     incidents = []
     if USE_FIREBASE:
-        docs = db.collection("incidents").stream()
-        incidents = [doc.to_dict() for doc in docs]
+        try:
+            docs = db.collection("incidents").stream()
+            incidents = [doc.to_dict() for doc in docs]
+            logger.info("[DIAG] GET /api/incidents: fetched %d incidents from Firestore", len(incidents))
+        except Exception as e:
+            logger.error("[DIAG] GET /api/incidents: Firestore read failed: %s", str(e), exc_info=True)
+            raise e
     else:
-        db_data = load_local_db()
-        incidents = db_data["incidents"]
+        try:
+            db_data = load_local_db()
+            incidents = db_data["incidents"]
+            logger.info("[DIAG] GET /api/incidents: loaded %d incidents from local db.json", len(incidents))
+        except Exception as e:
+            logger.error("[DIAG] GET /api/incidents: local db.json read failed: %s", str(e), exc_info=True)
+            raise e
         
     # Run Escalation Agent logic
     now_ms = int(datetime.utcnow().timestamp() * 1000)
@@ -554,6 +565,7 @@ async def get_incidents():
 
 @app.post("/api/incidents")
 async def create_incident(incident: IncidentCreate):
+    logger.info("[DIAG] POST /api/incidents called. title=%r USE_FIREBASE=%s", incident.title, USE_FIREBASE)
     # Generates ID
     prefix = "UR"
     category_lower = incident.category.lower()
@@ -629,11 +641,23 @@ async def create_incident(incident: IncidentCreate):
     }
 
     if USE_FIREBASE:
-        db.collection("incidents").document(unique_id).set(new_incident)
+        try:
+            logger.info("[DIAG] POST /api/incidents: writing doc %s to Firestore", unique_id)
+            db.collection("incidents").document(unique_id).set(new_incident)
+            logger.info("[DIAG] POST /api/incidents: Firestore write OK for doc %s", unique_id)
+        except Exception as e:
+            logger.error("[DIAG] POST /api/incidents: Firestore write failed: %s", str(e), exc_info=True)
+            raise e
     else:
-        db_data = load_local_db()
-        db_data["incidents"].insert(0, new_incident)
-        save_local_db(db_data)
+        try:
+            logger.info("[DIAG] POST /api/incidents: writing %s to local db.json", unique_id)
+            db_data = load_local_db()
+            db_data["incidents"].insert(0, new_incident)
+            save_local_db(db_data)
+            logger.info("[DIAG] POST /api/incidents: local db.json write OK for %s", unique_id)
+        except Exception as e:
+            logger.error("[DIAG] POST /api/incidents: local db.json write failed: %s", str(e), exc_info=True)
+            raise e
 
     await manager.broadcast({"type": "INCIDENT_NEW", "data": new_incident})
     await log_audit(f"New incident reported: {incident.title} (Priority: {incident.priority})", user="Citizen")
