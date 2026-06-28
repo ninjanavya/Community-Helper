@@ -2,14 +2,12 @@ FROM node:18
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY frontend/package*.json ./
 
 RUN npm install
 
-COPY . .
-
-RUN npm run build
+COPY frontend/ .
 
 EXPOSE 8080
 
-CMD ["npm","run","dev","--","--host","0.0.0.0"]
+CMD ["npm","start"]
