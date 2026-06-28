@@ -16,7 +16,7 @@ from PIL import Image
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("CommunityHelperAPI")
 
-
+app = FastAPI()
 
 # Enable CORS
 app.add_middleware(
