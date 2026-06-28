@@ -96,14 +96,15 @@
             }
         }
 
-        if (role) {
-            if (options.headers instanceof Headers) {
-                options.headers.set('X-User-Role', role);
-            } else if (Array.isArray(options.headers)) {
-                options.headers.push(['X-User-Role', role]);
-            } else {
-                options.headers['X-User-Role'] = role;
-            }
+        // Inject role header; fall back to 'member' for public pages (e.g. index.html) that
+        // read public data without a login session — backend middleware requires any valid role.
+        const effectiveRole = role || 'member';
+        if (options.headers instanceof Headers) {
+            options.headers.set('X-User-Role', effectiveRole);
+        } else if (Array.isArray(options.headers)) {
+            options.headers.push(['X-User-Role', effectiveRole]);
+        } else {
+            options.headers['X-User-Role'] = effectiveRole;
         }
         try {
             const response = await originalFetch(url, options);
