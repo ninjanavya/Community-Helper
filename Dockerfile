@@ -1,13 +1,13 @@
-FROM node:18
+FROM python:3.11
 
 WORKDIR /app
 
-COPY frontend/package*.json ./
+COPY backend/requirements.txt .
 
-RUN npm install
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY frontend/ .
+COPY backend/ .
 
 EXPOSE 8080
 
-CMD ["npm","start"]
+CMD ["python", "main.py"]
