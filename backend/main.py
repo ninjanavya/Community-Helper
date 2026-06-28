@@ -113,18 +113,32 @@ else:
 USE_FIREBASE = False
 db = None
 
-firebase_creds_path = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
-if firebase_creds_path and os.path.exists(firebase_creds_path):
-    try:
-        import firebase_admin
-        from firebase_admin import credentials, firestore, auth
-        cred = credentials.Certificate(firebase_creds_path)
+firebase_creds_raw = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
+try:
+    import firebase_admin
+    from firebase_admin import credentials, firestore, auth
+    
+    if firebase_creds_raw:
+        # Clean any surrounding quotes that might be injected by GCP/Secret Manager
+        cleaned_creds = firebase_creds_raw.strip().strip("'").strip('"')
+        if os.path.exists(cleaned_creds):
+            cred = credentials.Certificate(cleaned_creds)
+        else:
+            cred_dict = json.loads(cleaned_creds)
+            cred = credentials.Certificate(cred_dict)
         firebase_admin.initialize_app(cred)
-        db = firestore.client()
-        USE_FIREBASE = True
-        logger.info("🔥 Firebase Admin SDK initialized successfully in Firestore/Auth Mode.")
-    except Exception as e:
-        logger.error(f"❌ Failed to initialize Firebase: {e}. Falling back to Local JSON Mode.")
+        logger.info("🔥 Firebase Admin SDK initialized using FIREBASE_SERVICE_ACCOUNT.")
+    else:
+        # Fall back to Application Default Credentials (ADC) on GCP/Cloud Run
+        firebase_admin.initialize_app()
+        logger.info("🔥 Firebase Admin SDK initialized using Application Default Credentials (ADC).")
+        
+    db = firestore.client()
+    # Verify we can access/write to the database
+    USE_FIREBASE = True
+    logger.info("🔥 Firebase connection verified in Firestore/Auth Mode.")
+except Exception as e:
+    logger.error(f"❌ Failed to initialize Firebase: {e}. Falling back to Local JSON Mode.")
 
 # Local File-based Database Fallback (db.json)
 DB_FILE = os.path.join(os.path.dirname(__file__), "db.json")

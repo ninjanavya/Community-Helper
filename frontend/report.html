@@ -1256,9 +1256,20 @@
                 if (!res.ok) throw new Error("API analysis failed: HTTP " + res.status);
                 return res.json();
             })
+            .catch(err => {
+                console.warn('[LOG] /api/analyze failed or timed out. Falling back to default classification:', err);
+                return {
+                    category: "General",
+                    priority: "Medium",
+                    department: "Public Works Department",
+                    color: "#FF6B35",
+                    icon: "⚠️",
+                    confidence: 50.0
+                };
+            })
             .then(async (aiResult) => {
                 clearTimeout(timeoutId);
-                console.log(`[LOG] /api/analyze JSON parsed — ${(performance.now() - requestStart).toFixed(0)}ms`, aiResult);
+                console.log(`[LOG] /api/analyze completed or defaulted — ${(performance.now() - requestStart).toFixed(0)}ms`, aiResult);
 
                 const generatedId = aiResult.id || "RD-" + Math.floor(1000 + Math.random() * 9000);
 
@@ -1388,7 +1399,7 @@
                 const localList = JSON.parse(localStorage.getItem('hero_incidents_list') || '[]');
                 if (!localList.some(item => item.id === mockInc.id)) {
                     localList.unshift(mockInc);
-                    localStorage.setItem('hero_incidents_list', JSON.stringify(mockInc));
+                    localStorage.setItem('hero_incidents_list', JSON.stringify(localList));
                 }
 
                 console.log('[LOG] Before saveMediaLocally in fallback');

@@ -396,7 +396,8 @@
         function loadIncidents() {
             const localList = localStorage.getItem('hero_incidents_list');
             if (localList) {
-                incidentsList = JSON.parse(localList);
+                const parsed = JSON.parse(localList);
+                incidentsList = Array.isArray(parsed) ? parsed : [];
             } else {
                 incidentsList = []; // Disable static/mock incident list if empty/active
                 saveIncidents();
