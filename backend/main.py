@@ -547,13 +547,27 @@ async def get_incidents():
     now_ms = int(datetime.utcnow().timestamp() * 1000)
     modified = False
     
+    # Filter out invalid entries and verify types
+    valid_incidents = []
+    for inc in incidents:
+        if not isinstance(inc, dict):
+            continue
+        valid_incidents.append(inc)
+    incidents = valid_incidents
+    
     for inc in incidents:
         if inc.get("status") == "Resolved":
             continue
         
         priority = inc.get("priority", "Moderate")
         votes = inc.get("votes", 0)
-        age_ms = now_ms - inc.get("timestamp", now_ms)
+        
+        try:
+            timestamp = int(inc.get("timestamp", now_ms))
+        except (ValueError, TypeError):
+            timestamp = now_ms
+            
+        age_ms = now_ms - timestamp
         
         # Escalate if unresolved high/moderate issue older than 2 hours or has > 15 votes
         if priority != "Critical" and (age_ms > 7200000 or votes > 15):
@@ -563,19 +577,41 @@ async def get_incidents():
             inc["comments"] = comments
             modified = True
             
-            if USE_FIREBASE:
-                db.collection("incidents").document(inc["id"]).update({
-                    "priority": "Critical",
-                    "comments": comments
-                })
-            await log_audit(f"Incident {inc['id']} was automatically escalated to Critical by Escalation Agent.", user="System")
-            await manager.broadcast({"type": "incident_escalated", "data": inc})
+            inc_id = inc.get("id")
+            if inc_id:
+                if USE_FIREBASE:
+                    try:
+                        db.collection("incidents").document(inc_id).update({
+                            "priority": "Critical",
+                            "comments": comments
+                        })
+                    except Exception as e:
+                        logger.error(f"[DIAG] Failed to update Firestore document {inc_id} during escalation: {e}")
+                try:
+                    await log_audit(f"Incident {inc_id} was automatically escalated to Critical by Escalation Agent.", user="System")
+                except Exception as e:
+                    logger.error(f"[DIAG] Failed to log audit during escalation of {inc_id}: {e}")
+                try:
+                    await manager.broadcast({"type": "incident_escalated", "data": inc})
+                except Exception as e:
+                    logger.error(f"[DIAG] Failed to broadcast escalation of {inc_id}: {e}")
 
     if not USE_FIREBASE and modified:
-        db_data["incidents"] = incidents
-        save_local_db(db_data)
+        try:
+            db_data["incidents"] = incidents
+            save_local_db(db_data)
+        except Exception as e:
+            logger.error(f"[DIAG] Failed to save local db: {e}")
         
-    return sorted(incidents, key=lambda x: x.get("timestamp", 0), reverse=True)
+    def get_sort_timestamp(x):
+        try:
+            return int(x.get("timestamp", 0))
+        except (ValueError, TypeError):
+            return 0
+
+    sample_inc = incidents[0] if incidents else None
+    logger.info("[DIAG] GET /api/incidents returning: total_count=%d, sample_object=%r", len(incidents), sample_inc)
+    return sorted(incidents, key=get_sort_timestamp, reverse=True)
 
 @app.post("/api/incidents")
 async def create_incident(incident: IncidentCreate):
@@ -624,6 +660,23 @@ async def create_incident(incident: IncidentCreate):
     email = incident.reporter_email or "citizen@communityhelper.gov"
     user_uid = get_firebase_uid(email)
 
+    # Map category to department if assigned_team is "Unassigned" or not set
+    assigned_dept = incident.assigned_team or "Unassigned"
+    if not assigned_dept or assigned_dept == "Unassigned":
+        cat_lower = incident.category.lower()
+        if "road" in cat_lower or "pothole" in cat_lower:
+            assigned_dept = "Department of Transportation"
+        elif "water" in cat_lower:
+            assigned_dept = "Municipal Water Board"
+        elif "drain" in cat_lower:
+            assigned_dept = "City Drainage & Sewerage"
+        elif "lighting" in cat_lower or "streetlight" in cat_lower:
+            assigned_dept = "Municipal Lighting Agency"
+        elif "sanitation" in cat_lower or "garbage" in cat_lower:
+            assigned_dept = "Sanitation & Waste Management"
+        else:
+            assigned_dept = "Public Works Department"
+
     new_incident = {
         "id": unique_id,
         "category": incident.category,
@@ -634,7 +687,7 @@ async def create_incident(incident: IncidentCreate):
         "icon": incident.icon,
         "gps": gps_coords,
         "status": "Reported",
-        "crew": incident.assigned_team or "Unassigned",
+        "crew": "Unassigned",
         "priority": incident.priority or "Moderate",
         "confidence": incident.confidence or 95.0,
         "timestamp": int(datetime.utcnow().timestamp() * 1000),
@@ -642,7 +695,7 @@ async def create_incident(incident: IncidentCreate):
         "user_urgency": incident.user_urgency,
         "votes": incident.votes if incident.votes is not None else 12,
         "comments": incident.comments or [],
-        "assigned_team": incident.assigned_team or "Unassigned",
+        "assigned_team": assigned_dept,
         "resolution_time": incident.resolution_time or "2 days",
         "agent_workflow": incident.agent_workflow or [],
         "city": incident.city,
@@ -658,7 +711,7 @@ async def create_incident(incident: IncidentCreate):
         try:
             logger.info("[DIAG] POST /api/incidents: writing doc %s to Firestore", unique_id)
             db.collection("incidents").document(unique_id).set(new_incident)
-            logger.info("[DIAG] POST /api/incidents: Firestore write OK for doc %s", unique_id)
+            logger.info("[DIAG] POST /api/incidents: Firestore write OK for doc %s. Saved incident: category=%s, priority=%s, assigned_team=%s", unique_id, new_incident.get("category"), new_incident.get("priority"), new_incident.get("assigned_team"))
         except Exception as e:
             logger.error("[DIAG] POST /api/incidents: Firestore write failed: %s", str(e), exc_info=True)
             raise e
@@ -668,7 +721,7 @@ async def create_incident(incident: IncidentCreate):
             db_data = load_local_db()
             db_data["incidents"].insert(0, new_incident)
             save_local_db(db_data)
-            logger.info("[DIAG] POST /api/incidents: local db.json write OK for %s", unique_id)
+            logger.info("[DIAG] POST /api/incidents: local db.json write OK for %s. Saved incident: category=%s, priority=%s, assigned_team=%s", unique_id, new_incident.get("category"), new_incident.get("priority"), new_incident.get("assigned_team"))
         except Exception as e:
             logger.error("[DIAG] POST /api/incidents: local db.json write failed: %s", str(e), exc_info=True)
             raise e
