@@ -32,7 +32,7 @@ app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 async def db_and_role_middleware(request: Request, call_next):
     path = request.url.path
     # Bypass role validation for OPTIONS preflight, root, login, and user points endpoints
-    if request.method == "OPTIONS" or path == "/" or path == "/api/login" or not path.startswith("/api/") or path.startswith("/api/users/"):
+    if request.method == "OPTIONS" or path == "/" or path == "/api/login" or path.startswith("/api/incidents") or not path.startswith("/api/") or path.startswith("/api/users/"):
         return await call_next(request)
         
     user_role = request.headers.get("x-user-role")
