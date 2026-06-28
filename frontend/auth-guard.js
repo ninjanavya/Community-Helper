@@ -87,6 +87,15 @@
     window.fetch = async function(url, options) {
         options = options || {};
         options.headers = options.headers || {};
+
+        // Rewrite API URL dynamically if running in production on Cloud Run
+        if (typeof url === 'string' && url.startsWith('http://127.0.0.1:8000')) {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (!isLocal) {
+                url = url.replace('http://127.0.0.1:8000', window.location.origin);
+            }
+        }
+
         if (role) {
             if (options.headers instanceof Headers) {
                 options.headers.set('X-User-Role', role);
@@ -107,6 +116,19 @@
         } catch (err) {
             throw err;
         }
+    };
+
+    // Intercept native WebSocket to support dynamic API URL and rewrite in production
+    const originalWebSocket = window.WebSocket;
+    window.WebSocket = function(url, protocols) {
+        if (typeof url === 'string' && url.startsWith('ws://127.0.0.1:8000')) {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (!isLocal) {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                url = url.replace('ws://127.0.0.1:8000', `${protocol}//${window.location.host}`);
+            }
+        }
+        return new originalWebSocket(url, protocols);
     };
 
     // 5. Dynamic navigation filter and header elements insertion
