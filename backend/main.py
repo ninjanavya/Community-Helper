@@ -114,31 +114,86 @@ USE_FIREBASE = False
 db = None
 
 firebase_creds_raw = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
+gac_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+
+# Diagnostic logs for startup troubleshooting
+if firebase_creds_raw:
+    logger.info(f"[DIAG] Found FIREBASE_SERVICE_ACCOUNT env var (length: {len(firebase_creds_raw)})")
+else:
+    logger.info("[DIAG] FIREBASE_SERVICE_ACCOUNT env var is not set.")
+
+if gac_path:
+    logger.info(f"[DIAG] Found GOOGLE_APPLICATION_CREDENTIALS env var (path: {gac_path})")
+    clean_gac_path = gac_path.strip().strip("'").strip('"')
+    gac_exists = os.path.exists(clean_gac_path)
+    logger.info(f"[DIAG] GOOGLE_APPLICATION_CREDENTIALS path exists: {gac_exists}")
+
 try:
     import firebase_admin
     from firebase_admin import credentials, firestore, auth
     
+    cred = None
+    
+    # 1. Try env var FIREBASE_SERVICE_ACCOUNT first
     if firebase_creds_raw:
-        # Clean any surrounding quotes that might be injected by GCP/Secret Manager
-        cleaned_creds = firebase_creds_raw.strip().strip("'").strip('"').strip()
-        if cleaned_creds.startswith('{'):
-            cred_dict = json.loads(cleaned_creds)
-            cred = credentials.Certificate(cred_dict)
-            logger.info("🔥 Firebase Admin SDK: parsed credentials from inline JSON.")
+        cleaned = firebase_creds_raw.strip().strip("'").strip('"').strip()
+        if cleaned.startswith('{'):
+            try:
+                cred_dict = json.loads(cleaned)
+                cred = credentials.Certificate(cred_dict)
+                logger.info("[DIAG] Successfully parsed credentials from FIREBASE_SERVICE_ACCOUNT JSON.")
+            except Exception as e:
+                logger.error(f"[DIAG] Failed to parse FIREBASE_SERVICE_ACCOUNT JSON: {e}")
         else:
-            cred = credentials.Certificate(cleaned_creds)
-            logger.info(f"🔥 Firebase Admin SDK: loaded credentials from path: {cleaned_creds}")
+            logger.info(f"[DIAG] FIREBASE_SERVICE_ACCOUNT path exists: {os.path.exists(cleaned)}")
+            if os.path.exists(cleaned):
+                cred = credentials.Certificate(cleaned)
+                logger.info(f"[DIAG] Loaded credentials from path: {cleaned}")
+                
+    # 2. Try GOOGLE_APPLICATION_CREDENTIALS path if not loaded
+    if not cred and gac_path:
+        cleaned_gac = gac_path.strip().strip("'").strip('"').strip()
+        if os.path.exists(cleaned_gac):
+            try:
+                cred = credentials.Certificate(cleaned_gac)
+                logger.info(f"[DIAG] Loaded credentials from GOOGLE_APPLICATION_CREDENTIALS path: {cleaned_gac}")
+            except Exception as e:
+                logger.error(f"[DIAG] Failed to load GOOGLE_APPLICATION_CREDENTIALS: {e}")
+                
+    # 3. Try standard secret volume mount paths
+    if not cred:
+        possible_paths = [
+            "/secrets/FIREBASE_SERVICE_ACCOUNT",
+            "/secrets/firebase-service-account",
+            "/secrets/firebase/key.json",
+            "/secrets/firebase/service-account.json",
+            "./firebase-service-account.json",
+            "../firebase-service-account.json",
+            "./backend/firebase-service-account.json"
+        ]
+        for path in possible_paths:
+            if os.path.exists(path):
+                try:
+                    cred = credentials.Certificate(path)
+                    logger.info(f"[DIAG] Auto-discovered secret credentials at: {path}")
+                    break
+                except Exception as e:
+                    logger.warning(f"[DIAG] Found file at {path} but failed to load: {e}")
+
+    # Initialize Firebase Admin
+    if cred:
         firebase_admin.initialize_app(cred)
-        logger.info("🔥 Firebase Admin SDK initialized successfully.")
     else:
         # Fall back to Application Default Credentials (ADC) on GCP/Cloud Run
         firebase_admin.initialize_app()
-        logger.info("🔥 Firebase Admin SDK initialized using Application Default Credentials (ADC).")
+        logger.info("[DIAG] Initialized using default credentials.")
         
     db = firestore.client()
-    # Verify we can access/write to the database
     USE_FIREBASE = True
-    logger.info("🔥 Firebase connection verified in Firestore/Auth Mode. USE_FIREBASE=True")
+    
+    # Print the exact requested logs
+    logger.info("Firebase initialized successfully")
+    logger.info("USE_FIREBASE=True")
 except Exception as e:
     logger.error(f"❌ Failed to initialize Firebase: {e}")
     if "K_SERVICE" in os.environ:
