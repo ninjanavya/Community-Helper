@@ -76,11 +76,7 @@ Version Control:
 
 * GitHub
 
-## Live Demo
 
-Application Link:
-
-https://community-helper-696314459294.asia-south1.run.app
 
 ## Installation
 
