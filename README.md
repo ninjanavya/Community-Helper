@@ -77,19 +77,6 @@ Version Control:
 * GitHub
 
 
-
-## Installation
-
-```bash
-git clone <your-repository-url>
-
-cd Community-Helper
-
-pip install -r requirements.txt
-
-python main.py
-```
-
 ## Future Scope
 
 * Predictive analytics
