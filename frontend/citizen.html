@@ -577,6 +577,135 @@
             });
         }
 
+        // ── Incident Intelligence Report Mock Helper ──
+        function getMockIncidentIntelligenceReport(category, title, description) {
+            const cat = (category || "").toLowerCase();
+            const t = (title || "").toLowerCase();
+            const d = (description || "").toLowerCase();
+
+            if (cat.includes("road") || cat.includes("pothole") || t.includes("road") || t.includes("pothole") || d.includes("road") || d.includes("pothole")) {
+                return {
+                    "incident_type": "Pothole / Road Damage",
+                    "severity": "High",
+                    "priority": "Critical",
+                    "confidence": 97,
+                    "risk": "High",
+                    "summary": "Large road fissure/pothole detected in the middle of the active lane creating a significant safety hazard for motorists and cyclists.",
+                    "department": "Road Maintenance",
+                    "estimated_response": "Within 6 hours",
+                    "actions": [
+                        "Assign Road Maintenance Team",
+                        "Place Temporary Warning Signs",
+                        "Repair within 6 hours"
+                    ],
+                    "reasoning": [
+                        "Large visible road damage detected.",
+                        "Located on a frequently used roadway.",
+                        "Potential accident risk for two-wheelers.",
+                        "High AI confidence from image analysis."
+                    ]
+                };
+            } else if (cat.includes("water") || cat.includes("leak") || t.includes("water") || t.includes("leak") || d.includes("water") || d.includes("leak")) {
+                return {
+                    "incident_type": "Water Main Leak",
+                    "severity": "Medium",
+                    "priority": "High",
+                    "confidence": 94,
+                    "risk": "Moderate",
+                    "summary": "Active water main leakage detected with local flooding on sidewalk. Potential for pressure drop in surrounding sector.",
+                    "department": "Water & Sanitation Bureau",
+                    "estimated_response": "Within 12 hours",
+                    "actions": [
+                        "Dispatch Leak Detection Crew",
+                        "Isolate Section Valve",
+                        "Initiate Pipe Repair"
+                    ],
+                    "reasoning": [
+                        "Continuous fluid discharge observed in description/image.",
+                        "Flow rate estimated above 5 liters/minute.",
+                        "Risk of pavement erosion if unresolved."
+                    ]
+                };
+            } else if (cat.includes("ecology") || cat.includes("park") || cat.includes("tree") || t.includes("tree") || t.includes("park") || d.includes("tree") || d.includes("park")) {
+                return {
+                    "incident_type": "Fallen Tree / Blocked Path",
+                    "severity": "High",
+                    "priority": "High",
+                    "confidence": 96,
+                    "risk": "High",
+                    "summary": "Large tree branch fallen across sidewalk/cycle path, obstructing pedestrian traffic and posing obstruction risk.",
+                    "department": "Forestry & Parks Department",
+                    "estimated_response": "Within 4 hours",
+                    "actions": [
+                        "Deploy Tree Trimming Squad",
+                        "Clear Debris from Sidewalk",
+                        "Assess Remaining Tree Stability"
+                    ],
+                    "reasoning": [
+                        "Complete obstruction of public pedestrian walkway.",
+                        "Heavy timber requires chainsaws for clearing.",
+                        "Potential hazard if wind speed increases."
+                    ]
+                };
+            } else if (cat.includes("electricity") || cat.includes("light") || t.includes("light") || t.includes("power") || d.includes("light") || d.includes("power")) {
+                return {
+                    "incident_type": "Streetlight / Electrical Failure",
+                    "severity": "Medium",
+                    "priority": "High",
+                    "confidence": 95,
+                    "risk": "Moderate",
+                    "summary": "Streetlight malfunction reported, resulting in complete darkness along the pedestrian sidewalk corridor.",
+                    "department": "Electrical & Lighting Division",
+                    "estimated_response": "Within 8 hours",
+                    "actions": [
+                        "Dispatch Line Technician",
+                        "Inspect Local Junction Box",
+                        "Replace Damaged LED Fixtures"
+                    ],
+                    "reasoning": [
+                        "Darkness presents pedestrian safety and security concerns.",
+                        "High likelihood of faulty photocell or bulb failure.",
+                        "Quick diagnostic response scheduled for tonight."
+                    ]
+                };
+            } else {
+                return {
+                    "incident_type": "General Civil Incident",
+                    "severity": "Medium",
+                    "priority": "Moderate",
+                    "confidence": 91,
+                    "risk": "Low",
+                    "summary": "Civic helper reported issue classified under general municipal services. Initial verification complete.",
+                    "department": "Public Works Department",
+                    "estimated_response": "Within 24 hours",
+                    "actions": [
+                        "Dispatch Local Inspector",
+                        "Verify Community Report Details",
+                        "Schedule Standard Maintenance Work order"
+                    ],
+                    "reasoning": [
+                        "No immediate life safety hazards reported.",
+                        "Standard queue priority assignment.",
+                        "Verified coordinates map to public property."
+                    ]
+                };
+            }
+        }
+
+        function getIirBadgeClass(value) {
+            const val = (value || "").toLowerCase();
+            if (val === 'critical' || val === 'immediate') {
+                return 'bg-red-500/10 border-red-500/20 text-red-500 border';
+            } else if (val === 'high' || val === 'severe') {
+                return 'bg-orange-500/10 border-orange-500/20 text-orange-500 border';
+            } else if (val === 'moderate' || val === 'medium') {
+                return 'bg-amber-500/10 border-amber-500/20 text-amber-500 border';
+            } else if (val === 'low') {
+                return 'bg-slate-500/10 border-slate-500/20 text-slate-500 border';
+            }
+            return 'bg-blue-500/10 border-blue-500/20 text-blue-500 border';
+        }
+
         // Select Incident
         function selectIncident(id) {
             selectedIncidentId = id;
@@ -726,6 +855,139 @@
                 `;
             }
 
+            // Generate IIR data
+            const iirData = inc.iir || getMockIncidentIntelligenceReport(inc.category, inc.title, inc.description);
+            const isFallback = inc.iir_status === 'fallback' || !inc.iir;
+            const severityBadgeClass = getIirBadgeClass(iirData.severity || "Medium");
+            const priorityBadgeClass = getIirBadgeClass(iirData.priority || "Moderate");
+
+            let fallbackAlertHtml = '';
+            if (isFallback) {
+                fallbackAlertHtml = `
+                    <div class="border border-amber-300 bg-amber-50 text-amber-800 p-2.5 rounded-xl text-[10px] font-bold flex items-center space-x-1.5 animate-pulse mb-3">
+                        <span class="material-symbols-outlined text-sm">warning_amber</span>
+                        <span>AI analysis temporarily unavailable. A basic report has been generated.</span>
+                    </div>
+                `;
+            }
+
+            const actionsList = iirData.suggested_actions || iirData.actions || [];
+            const checklistHtml = actionsList.map(action => `
+                <label class="flex items-start gap-2.5 py-1 cursor-pointer">
+                    <input type="checkbox" class="mt-0.5 rounded text-secondary border-outline-variant focus:ring-secondary/20 h-3.5 w-3.5" />
+                    <span class="text-primary font-medium leading-tight">${action}</span>
+                </label>
+            `).join('');
+
+            const reasoningList = iirData.reasoning || [];
+            const reasoningHtml = reasoningList.map(reason => `
+                <li>${reason}</li>
+            `).join('');
+
+            const iirHtml = `
+                <div class="glass-panel border border-glass-border bg-surface-container-low p-5 rounded-2xl flex flex-col space-y-4 shadow-sm transition-all duration-700 ease-out transform opacity-0 translate-y-4" id="iir-panel">
+                    <!-- IIR Header -->
+                    <div class="flex items-center justify-between border-b border-glass-border pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">🧠</span>
+                            <div>
+                                <h4 class="text-xs font-black text-primary uppercase tracking-wider font-headline-md">Incident Intelligence Report</h4>
+                                <p class="text-[9px] text-on-surface-variant mt-0.5 font-technical-label">AI-generated civic response assessment and scheduling.</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-0.5 text-[8px] font-technical-label font-black uppercase tracking-wider rounded-lg bg-secondary/10 text-secondary border border-secondary/20">AI Active</span>
+                    </div>
+
+                    ${fallbackAlertHtml}
+
+                    <!-- Overview Stats/Badges Grid -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div class="bg-surface-container-lowest border border-glass-border p-2.5 rounded-xl text-center">
+                            <span class="block text-[7.5px] font-technical-label text-on-surface-variant uppercase leading-none">Incident Type</span>
+                            <span class="block font-black text-primary text-[10px] mt-1 truncate">${iirData.incident_type || iirData.category || "General"}</span>
+                        </div>
+                        <div class="bg-surface-container-lowest border border-glass-border p-2.5 rounded-xl text-center flex flex-col justify-between">
+                            <span class="block text-[7.5px] font-technical-label text-on-surface-variant uppercase leading-none">Severity</span>
+                            <div class="mt-1 flex justify-center">
+                                <span class="px-2 py-0.5 text-[8px] font-technical-label font-bold rounded ${severityBadgeClass}">${iirData.severity || "Medium"}</span>
+                            </div>
+                        </div>
+                        <div class="bg-surface-container-lowest border border-glass-border p-2.5 rounded-xl text-center flex flex-col justify-between">
+                            <span class="block text-[7.5px] font-technical-label text-on-surface-variant uppercase leading-none">Priority</span>
+                            <div class="mt-1 flex justify-center">
+                                <span class="px-2 py-0.5 text-[8px] font-technical-label font-bold rounded ${priorityBadgeClass}">${iirData.priority || "Moderate"}</span>
+                            </div>
+                        </div>
+                        <div class="bg-surface-container-lowest border border-glass-border p-2.5 rounded-xl text-center">
+                            <span class="block text-[7.5px] font-technical-label text-on-surface-variant uppercase leading-none">Risk Level</span>
+                            <span class="block font-black text-primary text-[10px] mt-1">${iirData.risk_level || iirData.risk || "Medium"}</span>
+                        </div>
+                    </div>
+
+                    <!-- Confidence Progress Bar -->
+                    <div class="bg-surface-container-lowest border border-glass-border rounded-2xl p-4 space-y-2">
+                        <div class="flex justify-between items-center text-[9px] font-technical-label text-on-surface-variant">
+                            <span>AI CLASSIFICATION CONFIDENCE</span>
+                            <span class="font-bold text-secondary">${iirData.confidence || 95.0}%</span>
+                        </div>
+                        <div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden border border-glass-border">
+                            <div class="bg-secondary h-full rounded-full transition-all duration-1000 ease-out" id="iir-confidence-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- AI Summary -->
+                    <div class="bg-surface-container-lowest border border-glass-border rounded-2xl p-4 space-y-1">
+                        <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase tracking-wider">AI Summary</span>
+                        <p class="font-bold text-xs text-primary leading-relaxed">${iirData.summary || "No summary provided."}</p>
+                    </div>
+
+                    <!-- Suggested Department and Est Response Time -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="bg-surface-container-lowest border border-glass-border p-3.5 rounded-xl">
+                            <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none">Suggested Department</span>
+                            <span class="block mt-1 font-bold text-primary flex items-center gap-1.5 text-xs">
+                                <span class="material-symbols-outlined text-sm text-status-assigned font-bold">corporate_fare</span>
+                                <span>${iirData.department || "Public Works"}</span>
+                            </span>
+                        </div>
+                        <div class="bg-surface-container-lowest border border-glass-border p-3.5 rounded-xl">
+                            <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none">Estimated Response Time</span>
+                            <span class="block mt-1 font-bold text-primary flex items-center gap-1.5 text-xs">
+                                <span class="material-symbols-outlined text-sm text-status-resolved font-bold">alarm</span>
+                                <span>${iirData.estimated_response || iirData.estimated_resolution || "2 days"}</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Suggested Actions Checklist -->
+                    <div class="bg-surface-container-lowest border border-glass-border rounded-2xl p-4 space-y-3">
+                        <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase tracking-wider">Suggested Actions</span>
+                        <div class="space-y-2 text-xs">
+                            ${checklistHtml}
+                        </div>
+                    </div>
+
+                    <!-- AI Reasoning Collapsible Section -->
+                    <details class="bg-surface-container-lowest border border-glass-border rounded-2xl p-4 transition-all duration-300 group">
+                        <summary class="flex justify-between items-center cursor-pointer text-xs font-bold text-primary select-none outline-none">
+                            <span>Why did the AI make this recommendation?</span>
+                            <span class="material-symbols-outlined transition-transform duration-300 group-open:rotate-180 text-on-surface-variant text-sm">expand_more</span>
+                        </summary>
+                        <ul class="mt-3 pl-5 list-disc space-y-1.5 text-[11px] text-on-surface-variant font-medium border-t border-glass-border/50 pt-3">
+                            ${reasoningHtml}
+                        </ul>
+                    </details>
+
+                    <!-- Bottom Badge -->
+                    <div class="flex justify-center pt-2">
+                        <span class="px-2.5 py-1 text-[8px] font-technical-label font-bold text-on-surface-variant bg-surface-container-low border border-glass-border rounded-full flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Generated by Community Intelligence Engine
+                        </span>
+                    </div>
+                </div>
+            `;
+
             panel.innerHTML = `
                 <!-- Panel Header -->
                 <div class="flex items-start justify-between border-b border-glass-border pb-3">
@@ -784,11 +1046,26 @@
                     <!-- Verification Container -->
                     ${verificationHtml}
 
+                    <!-- AI Intelligence Report Panel -->
+                    ${iirHtml}
+
                     <!-- Audit Log comments -->
                     ${commentsHtml}
 
                 </div>
             `;
+
+            setTimeout(() => {
+                const iirBar = document.getElementById('iir-confidence-bar');
+                if (iirBar) {
+                    iirBar.style.width = `${iirData.confidence}%`;
+                }
+                const iirPanel = document.getElementById('iir-panel');
+                if (iirPanel) {
+                    iirPanel.classList.remove('opacity-0', 'translate-y-4');
+                    iirPanel.classList.add('opacity-100', 'translate-y-0');
+                }
+            }, 50);
         }
 
         // Generate Live Timeline Progression

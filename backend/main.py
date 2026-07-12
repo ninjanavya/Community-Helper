@@ -373,6 +373,8 @@ class IncidentCreate(BaseModel):
     area_desc: Optional[str] = None
     sla_start_time: Optional[str] = None
     reporter_email: Optional[str] = "citizen@communityhelper.gov"
+    iir: Optional[Dict[str, Any]] = None
+    iir_status: Optional[str] = None
 
 class IncidentUpdate(BaseModel):
     status: Optional[str] = None
@@ -637,7 +639,9 @@ async def create_incident(incident: IncidentCreate):
         "area_desc": incident.area_desc,
         "sla_start_time": sla_time,
         "reporter_email": email,
-        "user_uid": user_uid
+        "user_uid": user_uid,
+        "iir": incident.iir,
+        "iir_status": incident.iir_status
     }
 
     if USE_FIREBASE:
@@ -806,55 +810,92 @@ async def analyze_incident(
     if len(description.strip()) < 15:
         guidance = "Your description is brief. Please include additional details like specific landmarks, estimated size, or hazards to help our crews."
 
-    # Gemini API Call
-    if USE_GEMINI and genai_client:
+    iir_data = None
+    iir_status = "fallback"
+    iir_message = "AI analysis temporarily unavailable. A basic report has been generated."
+
+    # Gemini API Call via CIE
+    img = None
+    if image:
         try:
-            contents = []
-            # Shortened, high-efficiency prompt keeping only required classification fields
-            prompt = f"""
-            Analyze issue: {title}. Desc: {description}.
-            Return JSON:
-            - category: "Road Damage"|"Water Infrastructure"|"Drainage System"|"Public Lighting"|"Sanitation"|"Civil Infrastructure"
-            - priority: "Low"|"Moderate"|"High"|"Critical"
-            - department: string
-            - estimated_resolution: string
-            - color: hex color
-            - icon: emoji
-            - confidence: float
-            - summary: short summary
-            - guidance: string (if desc < 15 chars/incomplete) else null
-            """
-            contents.append(prompt)
-
-            if image:
-                img_data = await image.read()
-                await image.seek(0)
-                from PIL import Image
-                img = Image.open(BytesIO(img_data))
-                contents.append(img)
-
-            start_gemini = time.time()
-            response = genai_client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=contents,
-                config=types.GenerateContentConfig(response_mime_type="application/json")
-            )
-            gemini_duration = time.time() - start_gemini
-            logger.info(f"Gemini API response duration: {gemini_duration:.3f}s")
-            
-            gemini_data = json.loads(response.text)
-            if gemini_data:
-                category = gemini_data.get("category", category)
-                combined_severity = gemini_data.get("priority", combined_severity)
-                dept = gemini_data.get("department", dept)
-                est_res = gemini_data.get("estimated_resolution", est_res)
-                color = gemini_data.get("color", color)
-                icon = gemini_data.get("icon", icon)
-                confidence = gemini_data.get("confidence", confidence)
-                summary = gemini_data.get("summary", summary)
-                guidance = gemini_data.get("guidance", guidance)
+            img_data = await image.read()
+            await image.seek(0)
+            from PIL import Image
+            img = Image.open(BytesIO(img_data))
         except Exception as e:
-            logger.error(f"Gemini API analysis failed: {e}")
+            logger.error(f"Failed to read image for CIE: {e}")
+
+    try:
+        # Run image validation via AVE if image is provided
+        is_valid = True
+        validation_reason = ""
+        validation_recommendation = ""
+        validation_confidence = 100.0
+        
+        if img:
+            try:
+                from ai.incident_engine import validate_incident_image
+                validation_res = validate_incident_image(img, description)
+                is_valid = validation_res.get("is_valid", True)
+                validation_reason = validation_res.get("reason", "")
+                validation_recommendation = validation_res.get("recommendation", "")
+                validation_confidence = validation_res.get("confidence", 100.0)
+                
+                if not is_valid:
+                    logger.info(f"Image validation failed: {validation_reason}")
+                    return {
+                        "is_valid": False,
+                        "reason": validation_reason,
+                        "confidence": validation_confidence,
+                        "recommendation": validation_recommendation
+                    }
+            except Exception as e:
+                logger.error(f"AVE image validation encountered error: {e}")
+
+        from ai.incident_engine import analyze_incident as cie_analyze_incident
+        start_gemini = time.time()
+        # CIE analyze_incident handles errors internally and returns fallback dict if it fails
+        iir_data = cie_analyze_incident(img, description)
+        gemini_duration = time.time() - start_gemini
+        logger.info(f"CIE Incident analysis duration: {gemini_duration:.3f}s")
+        
+        if iir_data:
+            # Map CIE fields back to old API fields to preserve backward compatibility
+            cie_type = iir_data.get("incident_type", "")
+            if "pothole" in cie_type.lower() or "road" in cie_type.lower():
+                category = "Road Damage"
+                color = "#FF6B35"
+                icon = "🕳️"
+            elif "water" in cie_type.lower() or "leak" in cie_type.lower():
+                category = "Water Infrastructure"
+                color = "#0EA5E9"
+                icon = "💧"
+            elif "drain" in cie_type.lower():
+                category = "Drainage System"
+                color = "#10B981"
+                icon = "🌊"
+            elif "light" in cie_type.lower() or "electrical" in cie_type.lower():
+                category = "Public Lighting"
+                color = "#F59E0B"
+                icon = "💡"
+            elif "tree" in cie_type.lower() or "park" in cie_type.lower() or "forestry" in cie_type.lower():
+                category = "Civil Infrastructure"
+                color = "#84CC16"
+                icon = "🌳"
+            else:
+                category = "Civil Infrastructure"
+                color = "#FF6B35"
+                icon = "⚠️"
+                
+            combined_severity = iir_data.get("priority", combined_severity)
+            dept = iir_data.get("department", dept)
+            est_res = iir_data.get("estimated_response", est_res)
+            confidence = iir_data.get("confidence", confidence)
+            summary = iir_data.get("summary", summary)
+            iir_status = iir_data.get("iir_status", "success")
+            iir_message = iir_data.get("iir_message", None)
+    except Exception as e:
+        logger.error(f"CIE incident analysis call failed: {e}")
 
     # Set Tags
     if "light" in category.lower() or "dark" in description.lower():
@@ -939,7 +980,13 @@ async def analyze_incident(
         "color": color,
         "guidance": guidance,
         "gemini_duration": gemini_duration,
-        "backend_duration": backend_duration
+        "backend_duration": backend_duration,
+        "iir": iir_data,
+        "iir_status": iir_status,
+        "iir_message": iir_message,
+        "is_valid": True,
+        "reason": "Image validation successful.",
+        "recommendation": ""
     }
 
 
