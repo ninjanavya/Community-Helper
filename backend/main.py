@@ -386,6 +386,8 @@ class IncidentUpdate(BaseModel):
     comments: Optional[List[str]] = None
     community_confirmations: Optional[int] = None
     duplicate_of: Optional[str] = None
+    reopened: Optional[bool] = None
+    reopened_at: Optional[int] = None
 
 class LoginRequest(BaseModel):
     email: str
@@ -704,6 +706,8 @@ async def update_incident(incident_id: str, payload: IncidentUpdate):
         if payload.comments is not None: updates["comments"] = payload.comments
         if payload.community_confirmations is not None: updates["community_confirmations"] = payload.community_confirmations
         if payload.duplicate_of is not None: updates["duplicate_of"] = payload.duplicate_of
+        if payload.reopened is not None: updates["reopened"] = payload.reopened
+        if payload.reopened_at is not None: updates["reopened_at"] = payload.reopened_at
         doc_ref.update(updates)
         target.update(updates)
     else:
@@ -721,6 +725,8 @@ async def update_incident(incident_id: str, payload: IncidentUpdate):
         if payload.comments is not None: target["comments"] = payload.comments
         if payload.community_confirmations is not None: target["community_confirmations"] = payload.community_confirmations
         if payload.duplicate_of is not None: target["duplicate_of"] = payload.duplicate_of
+        if payload.reopened is not None: target["reopened"] = payload.reopened
+        if payload.reopened_at is not None: target["reopened_at"] = payload.reopened_at
         db_data["incidents"][idx] = target
         save_local_db(db_data)
 

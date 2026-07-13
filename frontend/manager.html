@@ -608,6 +608,10 @@
                     statusHtml = `<span class="flex items-center gap-1.5 font-technical-label text-technical-label text-error">
                         <span class="w-1.5 h-1.5 bg-error rounded-full animate-ping"></span> UNASSIGNED
                     </span>`;
+                } else if (inc.status === "Active") {
+                    statusHtml = `<span class="flex items-center gap-1.5 font-technical-label text-technical-label text-[#FF6B35]">
+                        <span class="w-1.5 h-1.5 bg-[#FF6B35] rounded-full pulse-glow"></span> REOPENED
+                    </span>`;
                 } else if (inc.status === "Verified") {
                     statusHtml = `<span class="flex items-center gap-1.5 font-technical-label text-technical-label text-status-verified">
                         <span class="w-1.5 h-1.5 bg-status-verified rounded-full"></span> ASSIGNED

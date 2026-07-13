@@ -1326,6 +1326,76 @@
             };
         }
 
+        function showResolvedWarningModal(inc) {
+            return new Promise((resolve) => {
+                let modal = document.getElementById('resolved-warning-modal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'resolved-warning-modal';
+                    modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-300';
+                    document.body.appendChild(modal);
+                }
+                
+                let ageStr = "recently";
+                if (inc.timestamp) {
+                    const diffDays = Math.round((Date.now() - inc.timestamp) / (1000 * 60 * 60 * 24));
+                    if (diffDays >= 1) {
+                        ageStr = `${diffDays} days ago`;
+                    }
+                }
+                
+                modal.innerHTML = `
+                    <div class="glass-panel glass-surface p-6 rounded-2xl border border-glass-border shadow-2xl max-w-sm w-full text-primary relative bg-white" style="background-color: white; border: 1px solid rgba(0,0,0,0.1);">
+                        <h3 class="font-headline-md text-lg font-black text-primary mb-2 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[#FF6B35]">check_circle</span>
+                            Previously Resolved Issue
+                        </h3>
+                        <p class="text-xs font-semibold text-on-surface-variant mb-4 leading-relaxed">
+                            A similar issue at this location was marked as resolved.
+                        </p>
+                        
+                        <div class="space-y-2 mb-6 bg-surface-container/30 p-3 rounded-xl border border-glass-border text-[10px] font-sans font-semibold text-on-surface-variant">
+                            <div>
+                                <span class="block text-[8px] font-technical-label uppercase text-[#FF6B35]">Incident ID</span>
+                                <span>#${inc.id}</span>
+                            </div>
+                            <div>
+                                <span class="block text-[8px] font-technical-label uppercase text-[#FF6B35]">Resolved</span>
+                                <span>${ageStr}</span>
+                            </div>
+                        </div>
+                        
+                        <p class="text-xs font-semibold text-primary mb-6">
+                            Does the issue still exist?
+                        </p>
+                        
+                        <div class="flex flex-col gap-2">
+                            <button id="resolved-reopen-btn" class="w-full bg-[#FF6B35] hover:bg-[#e05a2b] text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition">Reopen Existing Incident</button>
+                            <button id="resolved-new-btn" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs transition">Create New Incident</button>
+                            <button id="resolved-cancel-btn" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs transition mt-1">Cancel</button>
+                        </div>
+                    </div>
+                `;
+                
+                modal.classList.remove('hidden');
+                
+                document.getElementById('resolved-reopen-btn').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve('reopen');
+                };
+                
+                document.getElementById('resolved-new-btn').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve('new');
+                };
+                
+                document.getElementById('resolved-cancel-btn').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve('cancel');
+                };
+            });
+        }
+
         async function verifyGpsConsistency() {
             return new Promise((resolve) => {
                 const imgInput = document.getElementById('img-input');
@@ -1642,6 +1712,100 @@
                         throw dupErr;
                     }
                     console.error("Duplicate check failed, reporting anyway:", dupErr);
+                }
+
+                // ── Resolved Incident Verification ──
+                try {
+                    const incidentsRes = await fetch('http://127.0.0.1:8000/api/incidents');
+                    if (incidentsRes.ok) {
+                        const allIncidents = await incidentsRes.json();
+                        
+                        function getDistanceMeters(lat1, lon1, lat2, lon2) {
+                            const R = 6371e3;
+                            const phi1 = lat1 * Math.PI / 180;
+                            const phi2 = lat2 * Math.PI / 180;
+                            const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+                            const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+                            
+                            const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                                      Math.cos(phi1) * Math.cos(phi2) *
+                                      Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+                            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                            return R * c;
+                        }
+                        
+                        const newLat = parseFloat(lat);
+                        const newLng = parseFloat(lng);
+                        
+                        const resolvedNearby = allIncidents.find(inc => {
+                            if ((inc.status || "").toLowerCase() !== "resolved") return false;
+                            if (inc.category !== aiResult.category) return false;
+                            
+                            let incLat = 12.971598;
+                            let incLng = 77.594562;
+                            try {
+                                if (inc.gps) {
+                                    const parts = inc.gps.split(',');
+                                    incLat = parseFloat(parts[0]);
+                                    incLng = parseFloat(parts[1]);
+                                }
+                            } catch (e) {}
+                            
+                            const dist = getDistanceMeters(newLat, newLng, incLat, incLng);
+                            return dist <= 150;
+                        });
+                        
+                        if (resolvedNearby) {
+                            console.log("[LOG] Matching resolved incident found nearby:", resolvedNearby);
+                            document.getElementById('loading-container').classList.add('hidden');
+                            
+                            const choice = await showResolvedWarningModal(resolvedNearby);
+                            
+                            if (choice === 'reopen') {
+                                console.log("[LOG] User chose to Reopen Existing Incident.");
+                                document.getElementById('loading-container').classList.remove('hidden');
+                                
+                                const patchRes = await fetch(`http://127.0.0.1:8000/api/incidents/${resolvedNearby.id}`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json', 'x-user-role': 'member' },
+                                    body: JSON.stringify({
+                                        status: 'Active',
+                                        reopened: true,
+                                        reopened_at: Date.now()
+                                    })
+                                });
+                                
+                                if (!patchRes.ok) throw new Error("Failed to reopen incident");
+                                
+                                const reopenedInc = await patchRes.json();
+                                
+                                const localList = JSON.parse(localStorage.getItem('hero_incidents_list') || '[]');
+                                const updatedList = localList.map(item => {
+                                    if (item.id === reopenedInc.id) {
+                                        return reopenedInc;
+                                    }
+                                    return item;
+                                });
+                                localStorage.setItem('hero_incidents_list', JSON.stringify(updatedList));
+                                
+                                showIncidentDashboard(reopenedInc);
+                                throw { name: 'ReopenHandled' };
+                            } else if (choice === 'cancel') {
+                                console.log("[LOG] User cancelled submission.");
+                                document.getElementById('loading-container').classList.add('hidden');
+                                document.getElementById('form-container').classList.remove('hidden');
+                                return;
+                            } else {
+                                console.log("[LOG] User chose to Create New Incident. Continuing submission.");
+                                document.getElementById('loading-container').classList.remove('hidden');
+                            }
+                        }
+                    }
+                } catch (resErr) {
+                    if (resErr.name === 'ReopenHandled') {
+                        throw resErr;
+                    }
+                    console.error("Resolved incident check failed:", resErr);
                 }
 
                 const generatedId = aiResult.id || "RD-" + Math.floor(1000 + Math.random() * 9000);
