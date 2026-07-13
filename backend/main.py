@@ -790,6 +790,8 @@ async def analyze_incident(
     Enhanced Evidence Intelligence Layer & Live Analysis using Gemini.
     """
     start_backend = time.time()
+    print("[DIAG] Request Received")
+    logger.info("[DIAG] Request Received")
     gemini_duration = 0.0
 
     has_image = image is not None
@@ -846,6 +848,7 @@ async def analyze_incident(
             logger.error(f"Failed to read image for CIE: {e}")
 
     try:
+        import asyncio
         # Run image validation via AVE if image is provided
         is_valid = True
         validation_reason = ""
@@ -854,8 +857,28 @@ async def analyze_incident(
         
         if img:
             try:
+                print("[DIAG] Before calling AVE")
+                logger.info("[DIAG] Before calling AVE")
+                start_ave = time.time()
+                
                 from ai.incident_engine import validate_incident_image
-                validation_res = validate_incident_image(img, description)
+                try:
+                    validation_res = await asyncio.wait_for(
+                        asyncio.to_thread(validate_incident_image, img, description),
+                        timeout=20.0
+                    )
+                except asyncio.TimeoutError:
+                    print("[DIAG] Gemini timeout occurred during AVE call")
+                    logger.error("[DIAG] Gemini timeout occurred during AVE call")
+                    return {
+                        "success": False,
+                        "reason": "Gemini timeout"
+                    }
+                
+                ave_elapsed = time.time() - start_ave
+                print(f"[DIAG] After AVE completes. Execution time: {ave_elapsed:.3f}s")
+                logger.info(f"[DIAG] After AVE completes. Execution time: {ave_elapsed:.3f}s")
+                
                 is_valid = validation_res.get("is_valid", True)
                 validation_reason = validation_res.get("reason", "")
                 validation_recommendation = validation_res.get("recommendation", "")
@@ -873,11 +896,30 @@ async def analyze_incident(
                 logger.error(f"AVE image validation encountered error: {e}", exc_info=True)
 
         from ai.incident_engine import analyze_incident as cie_analyze_incident
+        
+        print("[DIAG] Before calling Gemini")
+        logger.info("[DIAG] Before calling Gemini")
         start_gemini = time.time()
-        # CIE analyze_incident handles errors internally and returns fallback dict if it fails
-        iir_data = cie_analyze_incident(img, description)
+        
+        try:
+            iir_data = await asyncio.wait_for(
+                asyncio.to_thread(cie_analyze_incident, img, description),
+                timeout=20.0
+            )
+        except asyncio.TimeoutError:
+            print("[DIAG] Gemini timeout occurred during CIE call")
+            logger.error("[DIAG] Gemini timeout occurred during CIE call")
+            return {
+                "success": False,
+                "reason": "Gemini timeout"
+            }
+            
         gemini_duration = time.time() - start_gemini
-        logger.info(f"CIE Incident analysis duration: {gemini_duration:.3f}s")
+        print(f"[DIAG] Immediately after Gemini returns. Execution time: {gemini_duration:.3f}s")
+        logger.info(f"[DIAG] Immediately after Gemini returns. Execution time: {gemini_duration:.3f}s")
+        
+        print("[DIAG] Before parsing the response")
+        logger.info("[DIAG] Before parsing the response")
         
         if iir_data:
             # Map CIE fields back to old API fields to preserve backward compatibility
@@ -977,6 +1019,8 @@ async def analyze_incident(
     ]
 
     backend_duration = time.time() - start_backend
+    print("[DIAG] Before sending the HTTP response")
+    logger.info("[DIAG] Before sending the HTTP response")
     logger.info(f"Backend processing duration: {backend_duration:.3f}s")
 
     return {
