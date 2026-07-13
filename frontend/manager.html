@@ -262,13 +262,70 @@
             <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 <!-- Interactive Map Section -->
                 <div class="xl:col-span-2 space-y-6">
-                    <div class="glass-panel glass-surface border border-glass-border rounded-xl shadow-lg overflow-hidden h-[450px] relative">
-                        <div class="absolute top-4 left-4 z-10 flex gap-2">
-                            <span class="bg-glass-surface-dark/80 backdrop-blur-sm text-white px-3 py-1 rounded-full text-technical-label font-technical-label flex items-center gap-2">
-                                <span class="w-2 h-2 bg-error rounded-full pulse-glow-red"></span> LIVE FEED: D7 SECTOR MAP
-                            </span>
+                    <!-- AI Incident Heatmap Card -->
+                    <div class="glass-panel glass-surface border border-glass-border rounded-xl shadow-lg p-6 space-y-4">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <h3 class="font-headline-md text-headline-md font-black text-primary flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[#FF6B35]" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+                                    AI Incident Heatmap
+                                </h3>
+                                <p class="font-body-sm text-body-sm text-on-surface-variant">Civic issue concentration and spatial diagnostics</p>
+                            </div>
                         </div>
-                        <div id="manager-map" class="w-full h-full min-h-[450px] bg-surface-variant/40"></div>
+
+                        <!-- Heatmap Layout: Map + Sidebar -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <!-- Left 2 Columns: Map + Filters -->
+                            <div class="lg:col-span-2 space-y-4">
+                                <!-- Map Container -->
+                                <div class="rounded-xl overflow-hidden h-[350px] border border-glass-border relative">
+                                    <div id="manager-map" class="w-full h-full min-h-[350px] bg-surface-variant/40"></div>
+                                </div>
+
+                                <!-- Controls & Filters -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-surface-container/30 p-4 rounded-xl border border-glass-border">
+                                    <!-- Time/Status Filter -->
+                                    <div class="space-y-1.5">
+                                        <label class="block text-[10px] font-technical-label text-on-surface-variant uppercase tracking-wider font-bold">Timeline & Status</label>
+                                        <select id="heatmap-time-filter" onchange="applyHeatmapFilters()" class="w-full bg-surface-container border border-outline-variant rounded-lg px-3 py-2 text-xs font-semibold text-primary outline-none focus:ring-1 focus:ring-secondary">
+                                            <option value="all">All Incidents</option>
+                                            <option value="24h">Last 24 Hours</option>
+                                            <option value="7d">Last 7 Days</option>
+                                            <option value="active">Active Only</option>
+                                            <option value="resolved">Resolved Only</option>
+                                        </select>
+                                    </div>
+                                    <!-- Severity Filter -->
+                                    <div class="space-y-1.5">
+                                        <label class="block text-[10px] font-technical-label text-on-surface-variant uppercase tracking-wider font-bold">Severity Level</label>
+                                        <select id="heatmap-severity-filter" onchange="applyHeatmapFilters()" class="w-full bg-surface-container border border-outline-variant rounded-lg px-3 py-2 text-xs font-semibold text-primary outline-none focus:ring-1 focus:ring-secondary">
+                                            <option value="all">All Severities</option>
+                                            <option value="low">Low</option>
+                                            <option value="moderate">Moderate</option>
+                                            <option value="high">High</option>
+                                            <option value="critical">Critical</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column: Insights Panel -->
+                            <div class="bg-surface-container/30 border border-glass-border p-4 rounded-xl space-y-4 flex flex-col justify-between">
+                                <div>
+                                    <h4 class="font-bold text-xs text-primary uppercase tracking-wider border-b border-glass-border pb-2 mb-3 flex items-center gap-1.5">
+                                        <span class="material-symbols-outlined text-[#FF6B35] text-base">analytics</span>
+                                        Hotspot Summary
+                                    </h4>
+                                    <div class="space-y-3.5" id="heatmap-insights-content">
+                                        <!-- Computed Insights Will Go Here -->
+                                    </div>
+                                </div>
+                                <div class="text-[9px] font-semibold text-on-surface-variant leading-relaxed bg-secondary-container/10 p-2.5 rounded-lg border border-secondary-container/20">
+                                    ℹ Heat density weights critical issues higher. Resolved issues contribute 20% weight.
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <!-- Public Maintenance Queue Table -->
                     <div class="glass-panel glass-surface border border-glass-border rounded-xl shadow-lg p-6">
@@ -803,6 +860,103 @@
 
         function refreshManagerMapData() {
             if (!managerMap) return;
+            applyHeatmapFilters();
+        }
+
+        function updateHeatmapInsights(filteredIncidents) {
+            const insightsContainer = document.getElementById('heatmap-insights-content');
+            if (!insightsContainer) return;
+            
+            if (filteredIncidents.length === 0) {
+                insightsContainer.innerHTML = `
+                    <p class="text-xs text-on-surface-variant italic text-center py-8">No data matches current filters.</p>
+                `;
+                return;
+            }
+            
+            const areaCounts = {};
+            let criticalCount = 0;
+            let prioritySum = 0;
+            const categoryCounts = {};
+            
+            filteredIncidents.forEach(inc => {
+                const loc = inc.location || "";
+                const area = loc.includes("·") ? loc.split("·")[0].trim() : (loc.trim() || "City Center");
+                areaCounts[area] = (areaCounts[area] || 0) + 1;
+                
+                const sev = (inc.severity || inc.priority || "").toLowerCase();
+                if (sev === "critical") {
+                    criticalCount++;
+                }
+                
+                let val = 2;
+                if (sev === "critical") val = 4;
+                else if (sev === "high") val = 3;
+                else if (sev === "moderate" || sev === "medium") val = 2;
+                else if (sev === "low") val = 1;
+                prioritySum += val;
+                
+                const cat = inc.category || "General";
+                categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+            });
+            
+            let highestArea = "N/A";
+            let maxAreaCount = -1;
+            for (const area in areaCounts) {
+                if (areaCounts[area] > maxAreaCount) {
+                    maxAreaCount = areaCounts[area];
+                    highestArea = area;
+                }
+            }
+            
+            const avgPrioVal = prioritySum / filteredIncidents.length;
+            let avgPrioLabel = "Moderate";
+            let avgBadgeClass = "bg-amber-500/10 text-amber-500 border border-amber-500/20";
+            if (avgPrioVal >= 3.5) {
+                avgPrioLabel = "Critical";
+                avgBadgeClass = "bg-red-500/10 text-red-500 border border-red-500/20";
+            } else if (avgPrioVal >= 2.5) {
+                avgPrioLabel = "High";
+                avgBadgeClass = "bg-orange-500/10 text-orange-500 border border-orange-500/20";
+            } else if (avgPrioVal < 1.5) {
+                avgPrioLabel = "Low";
+                avgBadgeClass = "bg-slate-500/10 text-slate-500 border border-slate-500/20";
+            }
+            
+            let mostCommonCat = "N/A";
+            let maxCatCount = -1;
+            for (const cat in categoryCounts) {
+                if (categoryCounts[cat] > maxCatCount) {
+                    maxCatCount = categoryCounts[cat];
+                    mostCommonCat = cat;
+                }
+            }
+            
+            insightsContainer.innerHTML = `
+                <div class="bg-surface-container-low border border-glass-border p-3 rounded-xl space-y-1 font-sans">
+                    <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none font-bold">Highest Activity Area</span>
+                    <span class="block font-black text-primary text-xs mt-1 truncate">${highestArea}</span>
+                </div>
+                <div class="bg-surface-container-low border border-glass-border p-3 rounded-xl space-y-1 font-sans">
+                    <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none font-bold">Critical Incidents</span>
+                    <span class="block font-black text-error text-xs mt-1">${criticalCount}</span>
+                </div>
+                <div class="bg-surface-container-low border border-glass-border p-3 rounded-xl flex items-center justify-between font-sans">
+                    <div>
+                        <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none font-bold">Average Priority</span>
+                        <span class="block font-black text-primary text-[10px] mt-1">${avgPrioLabel}</span>
+                    </div>
+                    <span class="px-2 py-0.5 text-[8px] font-technical-label font-bold rounded ${avgBadgeClass}">${avgPrioVal.toFixed(1)} / 4.0</span>
+                </div>
+                <div class="bg-surface-container-low border border-glass-border p-3 rounded-xl space-y-1 font-sans">
+                    <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none font-bold">Most Common Category</span>
+                    <span class="block font-black text-primary text-xs mt-1 truncate">${mostCommonCat}</span>
+                </div>
+            `;
+        }
+
+        window.applyHeatmapFilters = function() {
+            if (!managerMap) return;
 
             managerMarkers.forEach(m => m.setMap(null));
             managerMarkers = [];
@@ -812,13 +966,36 @@
                 managerHeatmap = null;
             }
 
-            const mapPoints = incidentsList;
-            if (!mapPoints || mapPoints.length === 0) return;
+            const timeFilterEl = document.getElementById('heatmap-time-filter');
+            const sevFilterEl = document.getElementById('heatmap-severity-filter');
+
+            const timeVal = timeFilterEl ? timeFilterEl.value : "all";
+            const sevVal = sevFilterEl ? sevFilterEl.value : "all";
+
+            const now = Date.now();
+            const filteredIncidents = incidentsList.filter(inc => {
+                if (timeVal === "24h") {
+                    if (!inc.timestamp || (now - inc.timestamp) > 24 * 60 * 60 * 1000) return false;
+                } else if (timeVal === "7d") {
+                    if (!inc.timestamp || (now - inc.timestamp) > 7 * 24 * 60 * 60 * 1000) return false;
+                } else if (timeVal === "active") {
+                    if ((inc.status || "").toLowerCase() === "resolved") return false;
+                } else if (timeVal === "resolved") {
+                    if ((inc.status || "").toLowerCase() !== "resolved") return false;
+                }
+
+                if (sevVal !== "all") {
+                    const incSev = (inc.severity || inc.priority || "Moderate").toLowerCase();
+                    if (incSev !== sevVal) return false;
+                }
+
+                return true;
+            });
 
             const heatmapPoints = [];
             const usedCoords = {};
 
-            mapPoints.forEach(inc => {
+            filteredIncidents.forEach(inc => {
                 let lat = 12.971598;
                 let lng = 77.594562;
                 try {
@@ -829,12 +1006,11 @@
                     }
                 } catch (e) {}
 
-                // Jitter key based on 5 decimal places (~1 meter)
                 const coordKey = `${lat.toFixed(5)},${lng.toFixed(5)}`;
                 if (usedCoords[coordKey]) {
                     const count = usedCoords[coordKey];
-                    const angle = count * 0.9; // spiral pattern
-                    const radius = 0.00015 * Math.sqrt(count); // ~15 meters per step
+                    const angle = count * 0.9;
+                    const radius = 0.00015 * Math.sqrt(count);
                     lat += radius * Math.cos(angle);
                     lng += radius * Math.sin(angle);
                     usedCoords[coordKey]++;
@@ -844,15 +1020,20 @@
 
                 const latLng = new google.maps.LatLng(lat, lng);
 
-                let weight = 1;
-                if (inc.severity === "Critical") weight = 4;
-                else if (inc.severity === "High") weight = 3;
-                else if (inc.severity === "Moderate") weight = 2;
-                else if (inc.severity === "Low") weight = 1;
+                let weight = 0.6;
+                const sev = (inc.severity || inc.priority || "Moderate").toLowerCase();
+                if (sev === "critical") weight = 1.0;
+                else if (sev === "high") weight = 0.8;
+                else if (sev === "moderate" || sev === "medium") weight = 0.6;
+                else if (sev === "low") weight = 0.4;
+
+                if ((inc.status || "").toLowerCase() === "resolved") {
+                    weight = weight * 0.2;
+                }
 
                 heatmapPoints.push({
                     location: latLng,
-                    weight: weight
+                    weight: weight * 10
                 });
 
                 const marker = new google.maps.Marker({
@@ -897,7 +1078,9 @@
                     radius: 25
                 });
             }
-        }
+
+            updateHeatmapInsights(filteredIncidents);
+        };
 
         // ── Inspection Panel Controller ──
         function renderEmptyInspectionPanel() {
@@ -988,6 +1171,86 @@
 
         function renderInspectionPanel(inc) {
             const panel = document.getElementById('inspectionPanel');
+
+            // ── AI Operational Brief Data Extraction & Mapping ──
+            const iirData = inc.iir || getMockIncidentIntelligenceReport(inc.category, inc.title, inc.description);
+            const prio = iirData.priority || inc.priority || "Moderate";
+            const estTime = iirData.estimated_response || iirData.estimated_resolution || inc.resolution_time || "2 days";
+            const recommendedDept = iirData.department || inc.department || "Public Works Department";
+            
+            // ── AI Resolution Time Prediction ──
+            const pred = predictResolutionTime(inc, incidentsList);
+            
+            // Suggested Crew Size Logic
+            let crewSize = 2;
+            const prioUpper = prio.toUpperCase();
+            if (prioUpper.includes("CRITICAL")) {
+                crewSize = 4;
+            } else if (prioUpper.includes("HIGH")) {
+                crewSize = 3;
+            } else if (prioUpper.includes("MEDIUM") || prioUpper.includes("MODERATE")) {
+                crewSize = 2;
+            } else if (prioUpper.includes("LOW")) {
+                crewSize = 1;
+            }
+            
+            // Equipment Mapping based on Department
+            let equipment = "Standard safety gear, cones";
+            const deptLower = recommendedDept.toLowerCase();
+            if (deptLower.includes("road") || deptLower.includes("maintenance")) {
+                equipment = "Asphalt repair kit, safety cones";
+            } else if (deptLower.includes("water") || deptLower.includes("sanitation") || deptLower.includes("sewer") || deptLower.includes("drain")) {
+                if (deptLower.includes("water") || deptLower.includes("pipe") || deptLower.includes("leak")) {
+                    equipment = "Pipe repair kit, water pumps";
+                } else if (deptLower.includes("sanitation") || deptLower.includes("garbage") || deptLower.includes("dumping")) {
+                    equipment = "Garbage truck, cleanup crew";
+                } else {
+                    equipment = "Pipe repair kit, water pumps";
+                }
+            } else if (deptLower.includes("electrical") || deptLower.includes("light") || deptLower.includes("power")) {
+                equipment = "Lift vehicle, electrical toolkit";
+            } else if (deptLower.includes("forestry") || deptLower.includes("park") || deptLower.includes("tree") || deptLower.includes("garden")) {
+                equipment = "Chainsaw, cleanup truck";
+            } else if (deptLower.includes("sanitation") || deptLower.includes("garbage") || deptLower.includes("waste")) {
+                equipment = "Garbage truck, cleanup crew";
+            }
+            
+            // Risk if Delayed
+            let riskLevel = "Moderate";
+            let riskBadgeClass = "bg-amber-500/10 text-amber-500 border border-amber-500/20";
+            if (prioUpper.includes("CRITICAL")) {
+                riskLevel = "Critical";
+                riskBadgeClass = "bg-red-500/10 text-red-500 border border-red-500/20";
+            } else if (prioUpper.includes("HIGH")) {
+                riskLevel = "High";
+                riskBadgeClass = "bg-orange-500/10 text-orange-500 border border-orange-500/20";
+            } else if (prioUpper.includes("LOW")) {
+                riskLevel = "Low";
+                riskBadgeClass = "bg-slate-500/10 text-slate-500 border border-slate-500/20";
+            }
+            
+            let riskDescription = "Delaying intervention may cause escalation of the hazard, traffic inconvenience, or structural hazards.";
+            if (iirData.reasoning && iirData.reasoning.length > 0) {
+                riskDescription = iirData.reasoning[0];
+            } else if (inc.description) {
+                riskDescription = `Unresolved ${inc.title.toLowerCase()} presents safety risks to residents.`;
+            }
+            
+            // Recommended Actions List
+            let actionsHtml = '';
+            const actionsList = iirData.suggested_actions || iirData.actions || [
+                "Verify coordinates with dispatch",
+                "Deploy local crew with listed tools",
+                "Submit resolution update upon completion"
+            ];
+            actionsList.forEach(act => {
+                actionsHtml += `
+                    <li class="flex items-start gap-2 text-[10px] text-primary/80 font-semibold">
+                        <span class="text-[#FF6B35] font-black mt-0.5">•</span>
+                        <span>${act}</span>
+                    </li>
+                `;
+            });
             
             let aiSeverityProb = "75%";
             let resNeeded = "Standard Crew";
@@ -1224,6 +1487,86 @@
                         <div class="bg-white/5 p-3 rounded-lg border border-white/10">
                             <p class="text-[10px] text-on-tertiary-container uppercase font-technical-label">Est. Completion</p>
                             <p class="font-bold text-sm">${estCompletion}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Operational Brief Collapsible Panel -->
+                <div class="glass-panel glass-surface p-6 rounded-xl border border-glass-border shadow-lg">
+                    <!-- Collapsible Header -->
+                    <button type="button" onclick="toggleOperationalBrief()" class="w-full flex items-center justify-between text-left focus:outline-none">
+                        <h4 class="font-headline-md text-headline-md font-black text-primary flex items-center gap-2 select-none">
+                            <span class="material-symbols-outlined text-[#FF6B35]" style="font-variation-settings: 'FILL' 1;">psychology_alt</span>
+                            AI Operational Brief
+                        </h4>
+                        <span id="operational-brief-arrow" class="material-symbols-outlined transition-transform duration-300 transform text-on-surface-variant">expand_more</span>
+                    </button>
+
+                    <!-- Collapsible Content -->
+                    <div id="operational-brief-content" class="hidden mt-4 space-y-4 overflow-hidden transition-all duration-500 ease-in-out opacity-0 max-h-0">
+                        <div class="border-t border-glass-border pt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            <!-- Left Column: Details -->
+                            <div class="space-y-3">
+                                <div class="bg-surface-container-low border border-glass-border p-3 rounded-xl flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-[#FF6B35] text-lg">group</span>
+                                    <div>
+                                        <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none">Suggested Crew Size</span>
+                                        <span class="block font-black text-primary text-xs mt-1">${crewSize} Workers</span>
+                                    </div>
+                                </div>
+                                <div class="bg-surface-container-low border border-glass-border p-3 rounded-xl flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-[#FF6B35] text-lg">construction</span>
+                                    <div>
+                                        <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none font-bold">Equipment Required</span>
+                                        <span class="block font-black text-primary text-xs mt-1 truncate">${equipment}</span>
+                                    </div>
+                                </div>
+                                <div class="bg-surface-container-low border border-glass-border p-3 rounded-xl flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-[#FF6B35] text-lg">schedule</span>
+                                    <div>
+                                        <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none font-bold">Estimated Resolution Time</span>
+                                        <span class="block font-black text-primary text-xs mt-1">${estTime}</span>
+                                    </div>
+                                </div>
+                                <div class="bg-surface-container-low border border-glass-border p-3 rounded-xl flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-[#FF6B35] text-lg">dangerous</span>
+                                    <div class="flex-grow">
+                                        <div class="flex justify-between items-center">
+                                            <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none font-bold">Risk Level</span>
+                                            <span class="px-2 py-0.5 text-[8px] font-technical-label font-bold rounded ${riskBadgeClass}">${riskLevel}</span>
+                                        </div>
+                                        <p class="text-[10px] text-on-surface-variant leading-relaxed mt-1 font-medium">${riskDescription}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Middle Column: Recommended Actions -->
+                            <div class="bg-surface-container-low border border-glass-border p-4 rounded-xl space-y-3">
+                                <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase tracking-wider font-bold">Recommended Actions</span>
+                                <ul class="space-y-2">
+                                    ${actionsHtml}
+                                </ul>
+                            </div>
+
+                            <!-- Right Column: AI Resolution Prediction -->
+                            <div class="bg-surface-container-low border border-glass-border p-4 rounded-xl space-y-4">
+                                <span class="block text-[8px] font-technical-label text-[#FF6B35] uppercase tracking-wider font-bold">AI Resolution Prediction</span>
+                                <div class="flex items-baseline justify-between border-b border-glass-border pb-2">
+                                    <span class="text-xl font-black text-primary font-sans">${pred.hours.toFixed(1)} Hours</span>
+                                    <span class="px-2.5 py-0.5 text-[8px] bg-secondary/15 text-secondary font-technical-label font-bold rounded">${pred.confidence}% Confidence</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase tracking-wider leading-none font-bold">Prediction Basis</span>
+                                    <ul class="space-y-1.5">
+                                        ${pred.basis.map(b => `
+                                            <li class="flex items-start gap-1.5 text-[10px] text-primary/80 font-semibold">
+                                                <span class="text-[#FF6B35] font-black mt-0.5">•</span>
+                                                <span>${b.replace('•', '').trim()}</span>
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1532,6 +1875,268 @@
             closeResetModal();
             resetData();
         };
+
+        function predictResolutionTime(targetInc, list) {
+            const targetCat = (targetInc.category || "").toLowerCase();
+            const targetPrio = (targetInc.severity || targetInc.priority || "Moderate").toLowerCase();
+            const recommendedDept = targetInc.department || (targetInc.iir && targetInc.iir.department) || "Public Works Department";
+            
+            function parseDurationToHours(str) {
+                if (!str) return null;
+                const cleaned = str.toLowerCase().trim();
+                const num = parseFloat(cleaned);
+                if (isNaN(num)) return null;
+                
+                if (cleaned.includes("hour")) {
+                    return num;
+                } else if (cleaned.includes("day")) {
+                    return num * 24;
+                } else if (cleaned.includes("min")) {
+                    return num / 60;
+                }
+                return num;
+            }
+            
+            const resolvedSimilar = list.filter(inc => {
+                if ((inc.status || "").toLowerCase() !== "resolved") return false;
+                
+                const incCat = (inc.category || "").toLowerCase();
+                const incPrio = (inc.severity || inc.priority || "Moderate").toLowerCase();
+                
+                const catMatch = incCat === targetCat || incCat.includes(targetCat) || targetCat.includes(incCat);
+                const prioMatch = incPrio === targetPrio;
+                
+                return catMatch && prioMatch;
+            });
+            
+            let estHours = 0;
+            let confidence = 85;
+            let basis = [];
+            
+            let ruleHours = 48;
+            if (targetPrio === "critical") {
+                ruleHours = targetCat.includes("water") ? 4 : 12;
+            } else if (targetPrio === "high") {
+                ruleHours = 24;
+            } else if (targetPrio === "low") {
+                ruleHours = 72;
+            }
+            
+            let validHistoricalTimes = [];
+            resolvedSimilar.forEach(inc => {
+                const h = parseDurationToHours(inc.resolution_time || inc.estimated_resolution || (inc.iir && (inc.iir.estimated_response || inc.iir.estimated_resolution)));
+                if (h !== null) {
+                    validHistoricalTimes.push(h);
+                }
+            });
+            
+            if (validHistoricalTimes.length >= 2) {
+                const sum = validHistoricalTimes.reduce((a, b) => a + b, 0);
+                estHours = sum / validHistoricalTimes.length;
+                confidence = Math.min(96, 86 + validHistoricalTimes.length * 2);
+                basis.push(`• Similar ${targetInc.category || 'incident'} incidents`);
+                basis.push(`• Historical repair duration`);
+            } else {
+                estHours = ruleHours;
+                confidence = 82;
+                basis.push(`• Rule-based estimate (insufficient history)`);
+                basis.push(`• Baseline duration for priority`);
+            }
+            
+            basis.push(`• ${targetPrio.charAt(0).toUpperCase() + targetPrio.slice(1)} priority`);
+            
+            const activeDeptCount = list.filter(item => {
+                const itemDept = (item.department || (item.iir && item.iir.department) || "Public Works Department").toLowerCase();
+                const targetDeptClean = recommendedDept.toLowerCase();
+                return (item.status !== "Resolved") && (itemDept === targetDeptClean || itemDept.includes(targetDeptClean) || targetDeptClean.includes(itemDept));
+            }).length;
+            
+            basis.push(`• Department workload: ${activeDeptCount} active tickets`);
+            
+            return {
+                hours: estHours,
+                confidence: confidence,
+                basis: basis
+            };
+        }
+
+        function getMockIncidentIntelligenceReport(category, title, description) {
+            const cat = (category || "").toLowerCase();
+            const t = (title || "").toLowerCase();
+            const d = (description || "").toLowerCase();
+
+            if (cat.includes("road") || cat.includes("pothole") || t.includes("road") || t.includes("pothole") || d.includes("road") || d.includes("pothole")) {
+                return {
+                    "incident_type": "Pothole / Road Damage",
+                    "severity": "High",
+                    "priority": "Critical",
+                    "confidence": 97,
+                    "risk": "High",
+                    "risk_level": "High",
+                    "summary": "Large road fissure/pothole detected in the middle of the active lane creating a significant safety hazard for motorists and cyclists.",
+                    "department": "Road Maintenance",
+                    "estimated_response": "Within 6 hours",
+                    "actions": [
+                        "Assign Road Maintenance Team",
+                        "Place Temporary Warning Signs",
+                        "Repair within 6 hours"
+                    ],
+                    "suggested_actions": [
+                        "Assign Road Maintenance Team",
+                        "Place Temporary Warning Signs",
+                        "Repair within 6 hours"
+                    ],
+                    "reasoning": [
+                        "Visible asphalt fracture on a primary arterial transit lane.",
+                        "Bicycle route obstructed, creating high collision probability.",
+                        "Severe depth (>10cm) risks structural damage to vehicles."
+                    ]
+                };
+            } else if (cat.includes("water") || cat.includes("leak") || t.includes("water") || t.includes("leak") || d.includes("water") || d.includes("leak")) {
+                return {
+                    "incident_type": "Water Main Leak",
+                    "severity": "Medium",
+                    "priority": "High",
+                    "confidence": 94,
+                    "risk": "Moderate",
+                    "risk_level": "High",
+                    "summary": "High-pressure potable water pipeline fracture resulting in surface flooding and municipal water loss.",
+                    "department": "Water & Sanitation Bureau",
+                    "estimated_response": "Within 12 hours",
+                    "actions": [
+                        "Dispatch Leak Detection Crew",
+                        "Isolate Section Valve",
+                        "Initiate Pipe Repair"
+                    ],
+                    "suggested_actions": [
+                        "Dispatch Leak Detection Crew",
+                        "Isolate Section Valve",
+                        "Initiate Pipe Repair"
+                    ],
+                    "reasoning": [
+                        "Continuous fluid discharge observed with local pavement flooding.",
+                        "Risk of underground sinkhole formation if flow is not arrested.",
+                        "Clean drinking water wastage requires urgent department containment."
+                    ]
+                };
+            } else if (cat.includes("tree") || cat.includes("branch") || t.includes("tree") || t.includes("branch") || d.includes("tree") || d.includes("branch")) {
+                return {
+                    "incident_type": "Fallen Tree / Blocked Path",
+                    "severity": "High",
+                    "priority": "High",
+                    "confidence": 96,
+                    "risk": "High",
+                    "risk_level": "High",
+                    "summary": "Large tree branch fallen across sidewalk/cycle path, obstructing pedestrian traffic and posing obstruction risk.",
+                    "department": "Forestry & Parks Department",
+                    "estimated_response": "Within 4 hours",
+                    "actions": [
+                        "Deploy Tree Trimming Squad",
+                        "Clear Debris from Sidewalk",
+                        "Assess Remaining Tree Stability"
+                    ],
+                    "suggested_actions": [
+                        "Deploy Tree Trimming Squad",
+                        "Clear Debris from Sidewalk",
+                        "Assess Remaining Tree Stability"
+                    ],
+                    "reasoning": [
+                        "Complete blockage of cycle lane forces cyclists into vehicular traffic.",
+                        "Heavy timber requires chainsaws and municipal haulage vehicle.",
+                        "Wind conditions could destabilize remaining overhead branches."
+                    ]
+                };
+            } else if (cat.includes("light") || cat.includes("dark") || cat.includes("electrical") || t.includes("light") || t.includes("dark") || t.includes("electrical") || d.includes("light") || d.includes("dark") || d.includes("electrical")) {
+                return {
+                    "incident_type": "Streetlight / Electrical Failure",
+                    "severity": "Medium",
+                    "priority": "High",
+                    "confidence": 95,
+                    "risk": "Moderate",
+                    "risk_level": "Moderate",
+                    "summary": "Streetlight malfunction reported, resulting in complete darkness along the pedestrian sidewalk corridor.",
+                    "department": "Electrical & Lighting Division",
+                    "estimated_response": "Within 8 hours",
+                    "actions": [
+                        "Dispatch Line Technician",
+                        "Inspect Local Junction Box",
+                        "Replace Damaged LED Fixtures"
+                    ],
+                    "suggested_actions": [
+                        "Dispatch Line Technician",
+                        "Inspect Local Junction Box",
+                        "Replace Damaged LED Fixtures"
+                    ],
+                    "reasoning": [
+                        "Malfunctioning streetlight leaves a 50m stretch of public sidewalk in total darkness.",
+                        "Increases local vulnerability to security/pedestrian trip hazards.",
+                        "Requires high-elevation lift vehicle for bulb/sensor replacement."
+                    ]
+                };
+            } else {
+                return {
+                    "incident_type": "General Civil Incident",
+                    "severity": "Medium",
+                    "priority": "Moderate",
+                    "confidence": 91,
+                    "risk": "Low",
+                    "risk_level": "Low",
+                    "summary": "Civic helper reported issue classified under general municipal services. Initial verification complete.",
+                    "department": "Public Works Department",
+                    "estimated_response": "Within 24 hours",
+                    "actions": [
+                        "Dispatch Local Inspector",
+                        "Verify Community Report Details",
+                        "Schedule Standard Maintenance Work order"
+                    ],
+                    "suggested_actions": [
+                        "Dispatch Local Inspector",
+                        "Verify Community Report Details",
+                        "Schedule Standard Maintenance Work order"
+                    ],
+                    "reasoning": [
+                        "Standard priority ticket registered in general municipal backlog.",
+                        "No direct threat to human life safety or critical public utilities."
+                    ]
+                };
+            }
+        }
+
+        function getIirBadgeClass(value) {
+            const val = (value || "").toLowerCase();
+            if (val.includes("critical")) {
+                return "bg-red-500/10 text-red-500 border border-red-500/20";
+            } else if (val.includes("high")) {
+                return "bg-orange-500/10 text-orange-500 border border-orange-500/20";
+            } else if (val.includes("medium") || val.includes("moderate")) {
+                return "bg-amber-500/10 text-amber-500 border border-amber-500/20";
+            } else {
+                return "bg-slate-500/10 text-slate-500 border border-slate-500/20";
+            }
+        }
+
+        window.toggleOperationalBrief = function() {
+            const content = document.getElementById('operational-brief-content');
+            const arrow = document.getElementById('operational-brief-arrow');
+            if (!content) return;
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                content.offsetHeight; // Force reflow
+                content.classList.remove('opacity-0', 'max-h-0');
+                content.classList.add('opacity-100', 'max-h-[1000px]');
+                if (arrow) arrow.classList.add('rotate-180');
+            } else {
+                content.classList.remove('opacity-100', 'max-h-[1000px]');
+                content.classList.add('opacity-0', 'max-h-0');
+                if (arrow) arrow.classList.remove('rotate-180');
+                setTimeout(() => {
+                    if (content.classList.contains('max-h-0')) {
+                        content.classList.add('hidden');
+                    }
+                }, 500);
+            }
+        }
 
         window.onload = function() {
             loadIncidents();

@@ -277,26 +277,68 @@
                         </div>
                     </div>
 
-                    <!-- Live Map View -->
-                    <div class="h-[400px] rounded-2xl overflow-hidden glass-panel shadow-lg relative border-2 border-glass-border">
-                        <div id="admin-map" class="w-full h-full min-h-[400px] bg-surface-variant/20 z-0"></div>
-                        <!-- Heatmap pulse spots -->
-                        <div class="absolute top-1/4 left-1/3 w-24 h-24 bg-secondary/20 rounded-full blur-3xl heatmap-pulse pointer-events-none"></div>
-                        <div class="absolute bottom-1/3 right-1/4 w-32 h-32 bg-secondary/30 rounded-full blur-3xl heatmap-pulse pointer-events-none"></div>
-                        <div class="absolute inset-0 p-6 flex flex-col justify-between pointer-events-none">
-                            <div class="flex justify-between pointer-events-auto">
-                                <div class="glass-panel dark-glass-panel px-4 py-2 rounded-lg text-on-primary">
-                                    <span class="font-technical-label text-xs">GLOBAL OVERSIGHT MAP v2.4</span>
+                    <!-- AI Incident Heatmap Card -->
+                    <div class="glass-panel glass-surface border border-glass-border rounded-xl shadow-lg p-6 space-y-4">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <h3 class="font-headline-md text-headline-md font-black text-primary flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[#FF6B35]" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+                                    AI Incident Heatmap
+                                </h3>
+                                <p class="font-body-sm text-body-sm text-on-surface-variant">Civic issue concentration and spatial diagnostics</p>
+                            </div>
+                        </div>
+
+                        <!-- Heatmap Layout: Map + Sidebar -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <!-- Left 2 Columns: Map + Filters -->
+                            <div class="lg:col-span-2 space-y-4">
+                                <!-- Map Container -->
+                                <div class="rounded-xl overflow-hidden h-[300px] border border-glass-border relative">
+                                    <div id="admin-map" class="w-full h-full min-h-[300px] bg-surface-variant/40"></div>
                                 </div>
-                                <div class="flex flex-col gap-2">
-                                    <button class="glass-panel p-2 rounded-lg hover:bg-surface-variant/20 bg-white"><span class="material-symbols-outlined text-sm block">layers</span></button>
-                                    <button class="glass-panel p-2 rounded-lg hover:bg-surface-variant/20 bg-white"><span class="material-symbols-outlined text-sm block">add</span></button>
-                                    <button class="glass-panel p-2 rounded-lg hover:bg-surface-variant/20 bg-white"><span class="material-symbols-outlined text-sm block">remove</span></button>
+
+                                <!-- Controls & Filters -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-surface-container/30 p-4 rounded-xl border border-glass-border">
+                                    <!-- Time/Status Filter -->
+                                    <div class="space-y-1.5">
+                                        <label class="block text-[10px] font-technical-label text-on-surface-variant uppercase tracking-wider font-bold">Timeline & Status</label>
+                                        <select id="heatmap-time-filter" onchange="applyHeatmapFilters()" class="w-full bg-surface-container border border-outline-variant rounded-lg px-3 py-2 text-xs font-semibold text-primary outline-none focus:ring-1 focus:ring-secondary">
+                                            <option value="all">All Incidents</option>
+                                            <option value="24h">Last 24 Hours</option>
+                                            <option value="7d">Last 7 Days</option>
+                                            <option value="active">Active Only</option>
+                                            <option value="resolved">Resolved Only</option>
+                                        </select>
+                                    </div>
+                                    <!-- Severity Filter -->
+                                    <div class="space-y-1.5">
+                                        <label class="block text-[10px] font-technical-label text-on-surface-variant uppercase tracking-wider font-bold">Severity Level</label>
+                                        <select id="heatmap-severity-filter" onchange="applyHeatmapFilters()" class="w-full bg-surface-container border border-outline-variant rounded-lg px-3 py-2 text-xs font-semibold text-primary outline-none focus:ring-1 focus:ring-secondary">
+                                            <option value="all">All Severities</option>
+                                            <option value="low">Low</option>
+                                            <option value="moderate">Moderate</option>
+                                            <option value="high">High</option>
+                                            <option value="critical">Critical</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="glass-panel p-4 rounded-xl max-w-xs pointer-events-auto border-secondary/50 bg-white">
-                                <h4 class="font-card-title text-card-title text-primary uppercase mb-2">Zone Status: North Sector</h4>
-                                <p class="text-xs text-on-surface-variant leading-relaxed">System syncing active incident telemetry. AI recommending proactive dispatch realignment.</p>
+
+                            <!-- Right Column: Insights Panel -->
+                            <div class="bg-surface-container/30 border border-glass-border p-4 rounded-xl space-y-4 flex flex-col justify-between">
+                                <div>
+                                    <h4 class="font-bold text-xs text-primary uppercase tracking-wider border-b border-glass-border pb-2 mb-3 flex items-center gap-1.5">
+                                        <span class="material-symbols-outlined text-[#FF6B35] text-base">analytics</span>
+                                        Hotspot Summary
+                                    </h4>
+                                    <div class="space-y-3.5" id="heatmap-insights-content">
+                                        <!-- Computed Insights Will Go Here -->
+                                    </div>
+                                </div>
+                                <div class="text-[9px] font-semibold text-on-surface-variant leading-relaxed bg-secondary-container/10 p-2.5 rounded-lg border border-secondary-container/20">
+                                    ℹ Heat density weights critical issues higher. Resolved issues contribute 20% weight.
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -812,14 +854,6 @@
         function refreshAdminMapData() {
             if (!adminMap) return;
 
-            adminMarkers.forEach(m => m.setMap(null));
-            adminMarkers = [];
-
-            if (adminHeatmap) {
-                adminHeatmap.setMap(null);
-                adminHeatmap = null;
-            }
-
             fetch('http://127.0.0.1:8000/api/incidents')
             .then(res => res.json())
             .then(incidents => {
@@ -843,65 +877,7 @@
                 renderEscalations();
                 populateReassignDropdown();
                 updateAdminStats();
-
-                const heatmapPoints = [];
-
-                incidentsList.forEach(inc => {
-                    let lat = 12.971598;
-                    let lng = 77.594562;
-                    try {
-                        if (inc.gps) {
-                            const parts = inc.gps.split(',');
-                            lat = parseFloat(parts[0]);
-                            lng = parseFloat(parts[1]);
-                        }
-                    } catch (e) {}
-
-                    const latLng = new google.maps.LatLng(lat, lng);
-                    heatmapPoints.push(latLng);
-
-                    const marker = new google.maps.Marker({
-                        position: latLng,
-                        map: adminMap,
-                        title: inc.title,
-                        icon: {
-                            path: google.maps.SymbolPath.CIRCLE,
-                            scale: 8,
-                            fillColor: inc.severity === "Critical" ? "#ba1a1a" : (inc.severity === "High" ? "#FF6B35" : (inc.severity === "Low" ? "#76777d" : "#F59E0B")),
-                            fillOpacity: 0.9,
-                            strokeColor: "#FFFFFF",
-                            strokeWeight: 2
-                        }
-                    });
-
-                    const infoWindow = new google.maps.InfoWindow({
-                        content: `
-                            <div class="p-2 font-sans" style="max-width: 200px;">
-                                <div class="flex items-center space-x-1.5 mb-1">
-                                    <span class="text-base">${inc.icon || '⚠️'}</span>
-                                    <span class="font-extrabold text-[10px] text-slate-400 uppercase tracking-wider">${inc.category}</span>
-                                </div>
-                                <h4 class="font-black text-slate-900 text-xs">${inc.title}</h4>
-                                <p class="text-[10px] text-slate-500 mt-0.5">${inc.location}</p>
-                                <button onclick="inspectIncident('${inc.id}')" class="mt-2 text-[9px] font-black uppercase text-secondary hover:underline">Inspect Details</button>
-                            </div>
-                        `
-                    });
-
-                    marker.addListener('click', () => {
-                        infoWindow.open(adminMap, marker);
-                    });
-
-                    adminMarkers.push(marker);
-                });
-
-                if (heatmapPoints.length > 0 && typeof google.maps.visualization !== 'undefined') {
-                    adminHeatmap = new google.maps.visualization.HeatmapLayer({
-                        data: heatmapPoints,
-                        map: adminMap,
-                        radius: 25
-                    });
-                }
+                applyHeatmapFilters();
             })
             .catch(err => {
                 console.warn("Using local incidents list fallback on map:", err);
@@ -915,58 +891,6 @@
                 renderEscalations();
                 populateReassignDropdown();
                 updateAdminStats();
-
-                const heatmapPoints = [];
-
-                incidentsList.forEach(inc => {
-                    let lat = 12.971598;
-                    let lng = 77.594562;
-                    try {
-                        if (inc.gps) {
-                            const parts = inc.gps.split(',');
-                            lat = parseFloat(parts[0]);
-                            lng = parseFloat(parts[1]);
-                        }
-                    } catch (e) {}
-
-                    const latLng = new google.maps.LatLng(lat, lng);
-                    heatmapPoints.push(latLng);
-
-                    const marker = new google.maps.Marker({
-                        position: latLng,
-                        map: adminMap,
-                        title: inc.title,
-                        icon: {
-                            path: google.maps.SymbolPath.CIRCLE,
-                            scale: 8,
-                            fillColor: inc.severity === "Critical" ? "#ba1a1a" : (inc.severity === "High" ? "#FF6B35" : (inc.severity === "Low" ? "#76777d" : "#F59E0B")),
-                            fillOpacity: 0.9,
-                            strokeColor: "#FFFFFF",
-                            strokeWeight: 2
-                        }
-                    });
-
-                    const infoWindow = new google.maps.InfoWindow({
-                        content: `
-                            <div class="p-2 font-sans" style="max-width: 200px;">
-                                <div class="flex items-center space-x-1.5 mb-1">
-                                    <span class="text-base">${inc.icon || '⚠️'}</span>
-                                    <span class="font-extrabold text-[10px] text-slate-400 uppercase tracking-wider">${inc.category}</span>
-                                </div>
-                                <h4 class="font-black text-slate-900 text-xs">${inc.title}</h4>
-                                <p class="text-[10px] text-slate-500 mt-0.5">${inc.location}</p>
-                                <button onclick="inspectIncident('${inc.id}')" class="mt-2 text-[9px] font-black uppercase text-secondary hover:underline">Inspect Details</button>
-                            </div>
-                        `
-                    });
-
-                    marker.addListener('click', () => {
-                        infoWindow.open(adminMap, marker);
-                    });
-
-                    adminMarkers.push(marker);
-                });
-            });
         }
 
         function renderEscalations() {
@@ -1030,6 +954,225 @@
                 statEscalations.textContent = criticalEscalations.toString().padStart(2, '0');
             }
         }
+
+        function updateHeatmapInsights(filteredIncidents) {
+            const insightsContainer = document.getElementById('heatmap-insights-content');
+            if (!insightsContainer) return;
+            
+            if (filteredIncidents.length === 0) {
+                insightsContainer.innerHTML = `
+                    <p class="text-xs text-on-surface-variant italic text-center py-8">No data matches current filters.</p>
+                `;
+                return;
+            }
+            
+            const areaCounts = {};
+            let criticalCount = 0;
+            let prioritySum = 0;
+            const categoryCounts = {};
+            
+            filteredIncidents.forEach(inc => {
+                const loc = inc.location || "";
+                const area = loc.includes("·") ? loc.split("·")[0].trim() : (loc.trim() || "City Center");
+                areaCounts[area] = (areaCounts[area] || 0) + 1;
+                
+                const sev = (inc.severity || inc.priority || "").toLowerCase();
+                if (sev === "critical") {
+                    criticalCount++;
+                }
+                
+                let val = 2;
+                if (sev === "critical") val = 4;
+                else if (sev === "high") val = 3;
+                else if (sev === "moderate" || sev === "medium") val = 2;
+                else if (sev === "low") val = 1;
+                prioritySum += val;
+                
+                const cat = inc.category || "General";
+                categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+            });
+            
+            let highestArea = "N/A";
+            let maxAreaCount = -1;
+            for (const area in areaCounts) {
+                if (areaCounts[area] > maxAreaCount) {
+                    maxAreaCount = areaCounts[area];
+                    highestArea = area;
+                }
+            }
+            
+            const avgPrioVal = prioritySum / filteredIncidents.length;
+            let avgPrioLabel = "Moderate";
+            let avgBadgeClass = "bg-amber-500/10 text-amber-500 border border-amber-500/20";
+            if (avgPrioVal >= 3.5) {
+                avgPrioLabel = "Critical";
+                avgBadgeClass = "bg-red-500/10 text-red-500 border border-red-500/20";
+            } else if (avgPrioVal >= 2.5) {
+                avgPrioLabel = "High";
+                avgBadgeClass = "bg-orange-500/10 text-orange-500 border border-orange-500/20";
+            } else if (avgPrioVal < 1.5) {
+                avgPrioLabel = "Low";
+                avgBadgeClass = "bg-slate-500/10 text-slate-500 border border-slate-500/20";
+            }
+            
+            let mostCommonCat = "N/A";
+            let maxCatCount = -1;
+            for (const cat in categoryCounts) {
+                if (categoryCounts[cat] > maxCatCount) {
+                    maxCatCount = categoryCounts[cat];
+                    mostCommonCat = cat;
+                }
+            }
+            
+            insightsContainer.innerHTML = `
+                <div class="bg-surface-container-low border border-glass-border p-3 rounded-xl space-y-1 font-sans">
+                    <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none font-bold">Highest Activity Area</span>
+                    <span class="block font-black text-primary text-xs mt-1 truncate">${highestArea}</span>
+                </div>
+                <div class="bg-surface-container-low border border-glass-border p-3 rounded-xl space-y-1 font-sans">
+                    <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none font-bold">Critical Incidents</span>
+                    <span class="block font-black text-error text-xs mt-1">${criticalCount}</span>
+                </div>
+                <div class="bg-surface-container-low border border-glass-border p-3 rounded-xl flex items-center justify-between font-sans">
+                    <div>
+                        <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none font-bold">Average Priority</span>
+                        <span class="block font-black text-primary text-[10px] mt-1">${avgPrioLabel}</span>
+                    </div>
+                    <span class="px-2 py-0.5 text-[8px] font-technical-label font-bold rounded ${avgBadgeClass}">${avgPrioVal.toFixed(1)} / 4.0</span>
+                </div>
+                <div class="bg-surface-container-low border border-glass-border p-3 rounded-xl space-y-1 font-sans">
+                    <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase leading-none font-bold">Most Common Category</span>
+                    <span class="block font-black text-primary text-xs mt-1 truncate">${mostCommonCat}</span>
+                </div>
+            `;
+        }
+
+        window.applyHeatmapFilters = function() {
+            if (!adminMap) return;
+
+            adminMarkers.forEach(m => m.setMap(null));
+            adminMarkers = [];
+
+            if (adminHeatmap) {
+                adminHeatmap.setMap(null);
+                adminHeatmap = null;
+            }
+
+            const timeFilterEl = document.getElementById('heatmap-time-filter');
+            const sevFilterEl = document.getElementById('heatmap-severity-filter');
+
+            const timeVal = timeFilterEl ? timeFilterEl.value : "all";
+            const sevVal = sevFilterEl ? sevFilterEl.value : "all";
+
+            const now = Date.now();
+            const filteredIncidents = incidentsList.filter(inc => {
+                if (timeVal === "24h") {
+                    if (!inc.timestamp || (now - inc.timestamp) > 24 * 60 * 60 * 1000) return false;
+                } else if (timeVal === "7d") {
+                    if (!inc.timestamp || (now - inc.timestamp) > 7 * 24 * 60 * 60 * 1000) return false;
+                } else if (timeVal === "active") {
+                    if ((inc.status || "").toLowerCase() === "resolved") return false;
+                } else if (timeVal === "resolved") {
+                    if ((inc.status || "").toLowerCase() !== "resolved") return false;
+                }
+
+                if (sevVal !== "all") {
+                    const incSev = (inc.severity || inc.priority || "Moderate").toLowerCase();
+                    if (incSev !== sevVal) return false;
+                }
+
+                return true;
+            });
+
+            const heatmapPoints = [];
+            const usedCoords = {};
+
+            filteredIncidents.forEach(inc => {
+                let lat = 12.971598;
+                let lng = 77.594562;
+                try {
+                    if (inc.gps) {
+                        const parts = inc.gps.split(',');
+                        lat = parseFloat(parts[0]);
+                        lng = parseFloat(parts[1]);
+                    }
+                } catch (e) {}
+
+                const coordKey = `${lat.toFixed(5)},${lng.toFixed(5)}`;
+                if (usedCoords[coordKey]) {
+                    const count = usedCoords[coordKey];
+                    const angle = count * 0.9;
+                    const radius = 0.00015 * Math.sqrt(count);
+                    lat += radius * Math.cos(angle);
+                    lng += radius * Math.sin(angle);
+                    usedCoords[coordKey]++;
+                } else {
+                    usedCoords[coordKey] = 1;
+                }
+
+                const latLng = new google.maps.LatLng(lat, lng);
+
+                let weight = 0.6;
+                const sev = (inc.severity || inc.priority || "Moderate").toLowerCase();
+                if (sev === "critical") weight = 1.0;
+                else if (sev === "high") weight = 0.8;
+                else if (sev === "moderate" || sev === "medium") weight = 0.6;
+                else if (sev === "low") weight = 0.4;
+
+                if ((inc.status || "").toLowerCase() === "resolved") {
+                    weight = weight * 0.2;
+                }
+
+                heatmapPoints.push({
+                    location: latLng,
+                    weight: weight * 10
+                });
+
+                const marker = new google.maps.Marker({
+                    position: latLng,
+                    map: adminMap,
+                    title: inc.title,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: inc.severity === "Critical" ? "#ba1a1a" : (inc.severity === "High" ? "#FF6B35" : (inc.severity === "Low" ? "#76777d" : "#F59E0B")),
+                        fillOpacity: 0.9,
+                        strokeColor: "#FFFFFF",
+                        strokeWeight: 2
+                    }
+                });
+
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `
+                        <div class="p-2 font-sans" style="max-width: 200px;">
+                            <div class="flex items-center space-x-1.5 mb-1">
+                                <span class="text-base">${inc.icon || '⚠️'}</span>
+                                <span class="font-extrabold text-[10px] text-slate-400 uppercase tracking-wider">${inc.category}</span>
+                            </div>
+                            <h4 class="font-black text-slate-900 text-xs">${inc.title}</h4>
+                            <p class="text-[10px] text-slate-500 mt-0.5">${inc.location}</p>
+                            <button onclick="inspectIncident('${inc.id}')" class="mt-2 text-[9px] font-black uppercase text-secondary hover:underline">Inspect Details</button>
+                        </div>
+                    `
+                });
+
+                marker.addListener('click', () => {
+                    infoWindow.open(adminMap, marker);
+                });
+
+                adminMarkers.push(marker);
+            });
+
+            if (heatmapPoints.length > 0 && typeof google.maps.visualization !== 'undefined') {
+                adminHeatmap = new google.maps.visualization.HeatmapLayer({
+                    data: heatmapPoints,
+                    map: adminMap,
+                    radius: 25
+                });
+            }
+
+            updateHeatmapInsights(filteredIncidents);
+        };
 
         // ── Inspect Modal Controller ──
         let inspectMiniMap = null;
