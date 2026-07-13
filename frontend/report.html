@@ -1211,6 +1211,121 @@
             };
         }
 
+        function parseExifDate(exifDateStr) {
+            if (!exifDateStr) return null;
+            const parts = exifDateStr.trim().split(" ");
+            if (parts.length < 2) return null;
+            const dateParts = parts[0].split(":");
+            const timeParts = parts[1].split(":");
+            if (dateParts.length < 3 || timeParts.length < 3) return null;
+            
+            return new Date(
+                parseInt(dateParts[0], 10),
+                parseInt(dateParts[1], 10) - 1,
+                parseInt(dateParts[2], 10),
+                parseInt(timeParts[0], 10),
+                parseInt(timeParts[1], 10),
+                parseInt(timeParts[2], 10)
+            );
+        }
+
+        async function verifyImageFreshness() {
+            return new Promise((resolve) => {
+                const imgInput = document.getElementById('img-input');
+                if (!imgInput || imgInput.files.length === 0) {
+                    return resolve(true);
+                }
+                
+                const file = imgInput.files[0];
+                if (!window.EXIF) {
+                    console.warn('[Freshness Verification] EXIF-js library not loaded — skipping.');
+                    return resolve(true);
+                }
+                
+                EXIF.getData(file, function() {
+                    const dateTime = EXIF.getTag(this, "DateTimeOriginal") || EXIF.getTag(this, "DateTime");
+                    if (!dateTime) {
+                        console.log('[Freshness Verification] No date metadata in image — skipping.');
+                        return resolve(true);
+                    }
+                    
+                    const captureDate = parseExifDate(dateTime);
+                    if (!captureDate || isNaN(captureDate.getTime())) {
+                        console.log('[Freshness Verification] Could not parse date string:', dateTime);
+                        return resolve(true);
+                    }
+                    
+                    const now = new Date();
+                    const ageMs = now.getTime() - captureDate.getTime();
+                    const ageHours = ageMs / (1000 * 60 * 60);
+                    
+                    console.log(`[Freshness Verification] Image capture date: ${captureDate}, Age: ${ageHours.toFixed(1)} hours`);
+                    
+                    if (ageHours > 48) {
+                        let timeString = "";
+                        const ageDays = ageHours / 24;
+                        if (ageDays >= 1.5) {
+                            timeString = `${Math.round(ageDays)} days ago`;
+                        } else {
+                            timeString = `${Math.round(ageHours)} hours ago`;
+                        }
+                        showFreshnessWarningModal(timeString, resolve);
+                    } else {
+                        resolve(true);
+                    }
+                });
+            });
+        }
+
+        function showFreshnessWarningModal(timeString, resolve) {
+            let modal = document.getElementById('freshness-warning-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'freshness-warning-modal';
+                modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-300';
+                document.body.appendChild(modal);
+            }
+            
+            modal.innerHTML = `
+                <div class="glass-panel glass-surface p-6 rounded-2xl border border-glass-border shadow-2xl max-w-sm w-full text-primary relative bg-white" style="background-color: white; border: 1px solid rgba(0,0,0,0.1);">
+                    <h3 class="font-headline-md text-lg font-black text-primary mb-2 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[#FF6B35]">history</span>
+                        Image Freshness Warning
+                    </h3>
+                    <p class="text-xs font-semibold text-on-surface-variant mb-4 leading-relaxed">
+                        This image appears to have been captured approximately:
+                    </p>
+                    
+                    <div class="mb-6 bg-surface-container/30 p-4 rounded-xl border border-glass-border text-center">
+                        <span class="block text-lg font-black text-[#FF6B35] font-sans">${timeString}</span>
+                    </div>
+                    
+                    <p class="text-xs font-semibold text-primary mb-6">
+                        Please confirm that the civic issue still exists.
+                    </p>
+                    
+                    <div class="flex gap-3 justify-end">
+                        <button id="freshness-upload-btn" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs transition">Upload New Image</button>
+                        <button id="freshness-continue-btn" class="bg-[#FF6B35] hover:bg-[#e05a2b] text-white px-4 py-2 rounded-xl font-bold text-xs shadow-sm transition">Continue</button>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            
+            document.getElementById('freshness-upload-btn').onclick = () => {
+                modal.classList.add('hidden');
+                const imgInput = document.getElementById('img-input');
+                if (imgInput) imgInput.click();
+                resolve(false);
+            };
+            
+            document.getElementById('freshness-continue-btn').onclick = () => {
+                modal.classList.add('hidden');
+                resolve(true);
+            };
+        }
+
         async function verifyGpsConsistency() {
             return new Promise((resolve) => {
                 const imgInput = document.getElementById('img-input');
@@ -1363,6 +1478,13 @@
             const gpsOk = await verifyGpsConsistency();
             if (!gpsOk) {
                 console.log('[LOG] Submission cancelled by user due to GPS warning.');
+                return;
+            }
+
+            // ── Image Freshness Verification ──
+            const freshnessOk = await verifyImageFreshness();
+            if (!freshnessOk) {
+                console.log('[LOG] Submission cancelled by user due to freshness warning.');
                 return;
             }
 
