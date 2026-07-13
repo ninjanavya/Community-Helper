@@ -375,6 +375,8 @@ class IncidentCreate(BaseModel):
     reporter_email: Optional[str] = "citizen@communityhelper.gov"
     iir: Optional[Dict[str, Any]] = None
     iir_status: Optional[str] = None
+    community_confirmations: Optional[int] = 0
+    duplicate_of: Optional[str] = None
 
 class IncidentUpdate(BaseModel):
     status: Optional[str] = None
@@ -382,6 +384,8 @@ class IncidentUpdate(BaseModel):
     priority: Optional[str] = None
     votes: Optional[int] = None
     comments: Optional[List[str]] = None
+    community_confirmations: Optional[int] = None
+    duplicate_of: Optional[str] = None
 
 class LoginRequest(BaseModel):
     email: str
@@ -641,7 +645,9 @@ async def create_incident(incident: IncidentCreate):
         "reporter_email": email,
         "user_uid": user_uid,
         "iir": incident.iir,
-        "iir_status": incident.iir_status
+        "iir_status": incident.iir_status,
+        "community_confirmations": incident.community_confirmations if incident.community_confirmations is not None else 0,
+        "duplicate_of": incident.duplicate_of
     }
 
     if USE_FIREBASE:
@@ -696,6 +702,8 @@ async def update_incident(incident_id: str, payload: IncidentUpdate):
         if payload.priority is not None: updates["priority"] = payload.priority
         if payload.votes is not None: updates["votes"] = payload.votes
         if payload.comments is not None: updates["comments"] = payload.comments
+        if payload.community_confirmations is not None: updates["community_confirmations"] = payload.community_confirmations
+        if payload.duplicate_of is not None: updates["duplicate_of"] = payload.duplicate_of
         doc_ref.update(updates)
         target.update(updates)
     else:
@@ -711,6 +719,8 @@ async def update_incident(incident_id: str, payload: IncidentUpdate):
         if payload.priority is not None: target["priority"] = payload.priority
         if payload.votes is not None: target["votes"] = payload.votes
         if payload.comments is not None: target["comments"] = payload.comments
+        if payload.community_confirmations is not None: target["community_confirmations"] = payload.community_confirmations
+        if payload.duplicate_of is not None: target["duplicate_of"] = payload.duplicate_of
         db_data["incidents"][idx] = target
         save_local_db(db_data)
 
@@ -993,7 +1003,7 @@ async def analyze_incident(
 @app.post("/api/duplicate-check")
 async def duplicate_check(payload: DuplicateCheckRequest):
     """
-    Duplicate Detection Agent: checks proximity and title similarity.
+    Duplicate Detection: checks if a similar active incident is within 150m and matches category.
     """
     incidents = await get_incidents()
     parsed_gps = resolve_gps_coordinates(payload.gps)
@@ -1001,6 +1011,7 @@ async def duplicate_check(payload: DuplicateCheckRequest):
 
     duplicate_found = False
     matching_inc = None
+    matched_distance = 0
 
     for inc in incidents:
         if inc.get("status") == "Resolved":
@@ -1008,15 +1019,14 @@ async def duplicate_check(payload: DuplicateCheckRequest):
         try:
             inc_gps = resolve_gps_coordinates(inc.get("gps", ""))
             inc_lat, inc_lng = map(float, inc_gps.split(","))
-            dist = ((inc_lat - lat_val)**2 + (inc_lng - lng_val)**2) ** 0.5
+            dist_deg = ((inc_lat - lat_val)**2 + (inc_lng - lng_val)**2) ** 0.5
+            dist_meters = dist_deg * 111320
 
-            title_words = set(payload.title.lower().split())
-            inc_title_words = set(inc.get("title", "").lower().split())
-            overlap = len(title_words.intersection(inc_title_words))
-
-            if dist < 0.0025 and (overlap >= 2 or inc.get("category") == payload.category):
+            # Match category (from incident and payload) and check distance <= 150m
+            if dist_meters <= 150 and inc.get("category") == payload.category:
                 duplicate_found = True
                 matching_inc = inc
+                matched_distance = int(dist_meters)
                 break
         except Exception:
             pass
@@ -1027,13 +1037,21 @@ async def duplicate_check(payload: DuplicateCheckRequest):
             "data": matching_inc
         })
         return {
+            "duplicate": True,
+            "existing_incident_id": matching_inc["id"],
+            "distance": f"{matched_distance} meters",
+            "message": "A similar issue has already been reported nearby.",
             "is_duplicate": True,
             "matching_incident_id": matching_inc["id"],
             "matching_incident_title": matching_inc["title"],
-            "confidence": 92.5
+            "confidence": 95.0
         }
 
-    return {"is_duplicate": False, "confidence": 100.0}
+    return {
+        "duplicate": False,
+        "is_duplicate": False,
+        "confidence": 100.0
+    }
 
 @app.get("/api/hotspots")
 def get_hotspots():

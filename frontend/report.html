@@ -2,6 +2,7 @@
 <html class="light scroll-smooth overflow-y-auto" lang="en">
 <head>
     <script src="auth-guard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Citizen Reporting Portal | Community Helper</title>
@@ -1210,16 +1211,160 @@
             };
         }
 
+        async function verifyGpsConsistency() {
+            return new Promise((resolve) => {
+                const imgInput = document.getElementById('img-input');
+                if (!imgInput || imgInput.files.length === 0) {
+                    return resolve(true);
+                }
+                
+                const file = imgInput.files[0];
+                if (!window.EXIF) {
+                    console.warn('[GPS Verification] EXIF-js library not loaded — skipping.');
+                    return resolve(true);
+                }
+                
+                EXIF.getData(file, function() {
+                    const lat = EXIF.getTag(this, "GPSLatitude");
+                    const lon = EXIF.getTag(this, "GPSLongitude");
+                    const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+                    const lonRef = EXIF.getTag(this, "GPSLongitudeRef");
+                    
+                    if (!lat || !lon) {
+                        console.log('[GPS Verification] No GPS metadata in image — skipping.');
+                        return resolve(true);
+                    }
+                    
+                    function dmsToDd(dms, ref) {
+                        if (!dms || dms.length < 3) return 0;
+                        let degrees = dms[0] + dms[1] / 60 + dms[2] / 3600;
+                        if (ref === "S" || ref === "W") {
+                            degrees = -degrees;
+                        }
+                        return degrees;
+                    }
+                    
+                    const imgLat = dmsToDd(lat, latRef);
+                    const imgLon = dmsToDd(lon, lonRef);
+                    
+                    if (!navigator.geolocation) {
+                        console.warn('[GPS Verification] Geolocation not supported — skipping.');
+                        return resolve(true);
+                    }
+                    
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const userLat = position.coords.latitude;
+                            const userLon = position.coords.longitude;
+                            
+                            function getDistanceMeters(lat1, lon1, lat2, lon2) {
+                                const R = 6371e3;
+                                const phi1 = lat1 * Math.PI / 180;
+                                const phi2 = lat2 * Math.PI / 180;
+                                const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+                                const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+                                
+                                const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                                          Math.cos(phi1) * Math.cos(phi2) *
+                                          Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+                                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                                return R * c;
+                            }
+                            
+                            const distance = getDistanceMeters(imgLat, imgLon, userLat, userLon);
+                            console.log(`[GPS Verification] Image location: (${imgLat}, ${imgLon}), User location: (${userLat}, ${userLon}), Distance: ${distance}m`);
+                            
+                            if (distance > 200) {
+                                showGpsWarningModal(imgLat, imgLon, userLat, userLon, distance, resolve);
+                            } else {
+                                resolve(true);
+                            }
+                        },
+                        (error) => {
+                            console.warn('[GPS Verification] Geolocation failed — skipping:', error.message);
+                            resolve(true);
+                        },
+                        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    );
+                });
+            });
+        }
+
+        function showGpsWarningModal(imgLat, imgLon, userLat, userLon, distance, resolve) {
+            let modal = document.getElementById('gps-warning-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'gps-warning-modal';
+                modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-300';
+                document.body.appendChild(modal);
+            }
+            
+            modal.innerHTML = `
+                <div class="glass-panel glass-surface p-6 rounded-2xl border border-glass-border shadow-2xl max-w-sm w-full text-primary relative bg-white" style="background-color: white; border: 1px solid rgba(0,0,0,0.1);">
+                    <h3 class="font-headline-md text-lg font-black text-primary mb-2 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[#FF6B35]">location_searching</span>
+                        Location Verification
+                    </h3>
+                    <p class="text-xs font-semibold text-on-surface-variant mb-4 leading-relaxed">
+                        The uploaded image appears to have been captured at a different location than your current location.
+                    </p>
+                    
+                    <div class="space-y-2 mb-6 bg-surface-container/30 p-3 rounded-xl border border-glass-border text-[10px] font-sans font-semibold text-on-surface-variant">
+                        <div>
+                            <span class="block text-[8px] font-technical-label uppercase text-[#FF6B35]">Image Location</span>
+                            <span>(${imgLat.toFixed(6)}, ${imgLon.toFixed(6)})</span>
+                        </div>
+                        <div>
+                            <span class="block text-[8px] font-technical-label uppercase text-[#FF6B35]">Current Device Location</span>
+                            <span>(${userLat.toFixed(6)}, ${userLon.toFixed(6)})</span>
+                        </div>
+                        <div>
+                            <span class="block text-[8px] font-technical-label uppercase text-[#FF6B35]">Distance</span>
+                            <span>${Math.round(distance)} meters</span>
+                        </div>
+                    </div>
+                    
+                    <p class="text-xs font-semibold text-primary mb-6">
+                        Are you reporting an older issue or reporting on behalf of someone else?
+                    </p>
+                    
+                    <div class="flex gap-3 justify-end">
+                        <button id="gps-cancel-btn" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs transition">Cancel</button>
+                        <button id="gps-continue-btn" class="bg-[#FF6B35] hover:bg-[#e05a2b] text-white px-4 py-2 rounded-xl font-bold text-xs shadow-sm transition">Continue Anyway</button>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            
+            document.getElementById('gps-cancel-btn').onclick = () => {
+                modal.classList.add('hidden');
+                resolve(false);
+            };
+            
+            document.getElementById('gps-continue-btn').onclick = () => {
+                modal.classList.add('hidden');
+                resolve(true);
+            };
+        }
+
         // Stub: saveMediaLocally was referenced but never defined — prevents silent crash
         async function saveMediaLocally(id) {
             console.log('[LOG] saveMediaLocally called for id:', id, '(no-op stub)');
         }
 
-        function handleFormSubmit(e) {
+        async function handleFormSubmit(e) {
             e.preventDefault();
             console.log('[LOG] Submit clicked');
 
             if (isRecording) stopVoiceAudio();
+
+            // ── GPS Consistency Verification ──
+            const gpsOk = await verifyGpsConsistency();
+            if (!gpsOk) {
+                console.log('[LOG] Submission cancelled by user due to GPS warning.');
+                return;
+            }
 
             document.getElementById('form-container').classList.add('hidden');
             document.getElementById('loading-container').classList.remove('hidden');
@@ -1299,6 +1444,83 @@
                 // Validation succeeded. If there was a previous alert banner, remove it.
                 const prevAlert = document.getElementById('image-validation-alert');
                 if (prevAlert) prevAlert.remove();
+
+                // Now, check for duplicates before proceeding!
+                try {
+                    const dupCheckRes = await fetch('http://127.0.0.1:8000/api/duplicate-check', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-user-role': 'member' },
+                        body: JSON.stringify({
+                            title: title,
+                            description: desc,
+                            gps: `${lat}, ${lng}`,
+                            category: aiResult.category
+                        })
+                    });
+                    if (dupCheckRes.ok) {
+                        const dupData = await dupCheckRes.json();
+                        if (dupData && dupData.duplicate) {
+                            console.log("[LOG] Duplicate incident detected:", dupData);
+                            
+                            // Hide loader so the user can interact with the dialog
+                            document.getElementById('loading-container').classList.add('hidden');
+                            
+                            // Show confirmation dialog and wait for user choice!
+                            const userChoice = await showDuplicateDialog(dupData);
+                            
+                            if (userChoice === 'join') {
+                                console.log("[LOG] User chose to Join Existing Report.");
+                                // Show loader during join process
+                                document.getElementById('loading-container').classList.remove('hidden');
+                                
+                                // Fetch local incidents list to get current votes/confirmations
+                                const localList = JSON.parse(localStorage.getItem('hero_incidents_list') || '[]');
+                                const existingInc = localList.find(inc => inc.id === dupData.existing_incident_id);
+                                const currentConfirmations = existingInc ? (existingInc.community_confirmations || 0) : 0;
+                                const currentVotes = existingInc ? (existingInc.votes || 12) : 12;
+                                
+                                // Update existing report
+                                const patchRes = await fetch(`http://127.0.0.1:8000/api/incidents/${dupData.existing_incident_id}`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json', 'x-user-role': 'member' },
+                                    body: JSON.stringify({
+                                        community_confirmations: currentConfirmations + 1,
+                                        votes: currentVotes + 1
+                                    })
+                                });
+                                if (!patchRes.ok) throw new Error("Failed to update existing incident");
+                                
+                                // Update local list with the incremented values
+                                const updatedList = localList.map(inc => {
+                                    if (inc.id === dupData.existing_incident_id) {
+                                        return {
+                                            ...inc,
+                                            community_confirmations: currentConfirmations + 1,
+                                            votes: currentVotes + 1
+                                        };
+                                    }
+                                    return inc;
+                                });
+                                localStorage.setItem('hero_incidents_list', JSON.stringify(updatedList));
+                                localStorage.setItem('active_citizen_incident_id', dupData.existing_incident_id);
+                                
+                                // Redirect to citizen.html showing that ticket
+                                setTimeout(() => { window.location.href = 'citizen.html?ticket=' + dupData.existing_incident_id; }, 1000);
+                                
+                                // Throw a special error to break the promise chain cleanly
+                                throw { name: 'DuplicateHandled' };
+                            } else {
+                                console.log("[LOG] User chose to Report Anyway. Restoring loader and continuing.");
+                                document.getElementById('loading-container').classList.remove('hidden');
+                            }
+                        }
+                    }
+                } catch (dupErr) {
+                    if (dupErr.name === 'DuplicateHandled') {
+                        throw dupErr;
+                    }
+                    console.error("Duplicate check failed, reporting anyway:", dupErr);
+                }
 
                 const generatedId = aiResult.id || "RD-" + Math.floor(1000 + Math.random() * 9000);
 
@@ -1386,6 +1608,10 @@
             })
             .catch(async (err) => {
                 clearTimeout(timeoutId);
+                if (err.name === 'DuplicateHandled') {
+                    console.log('[LOG] Duplicate check handled — ignoring fallback.');
+                    return;
+                }
                 if (err.name === 'ValidationError') {
                     console.log('[LOG] ValidationError caught — ignoring offline fallback.');
                     return;
@@ -2377,6 +2603,58 @@
         function resolveMismatch(source) {
             const banner = document.getElementById('success-loc-mismatch-banner') || document.getElementById('loc-mismatch-banner');
             if (banner) banner.classList.add('hidden');
+        }
+
+        function showDuplicateDialog(dupData) {
+            return new Promise((resolve) => {
+                let modal = document.getElementById('duplicate-confirm-modal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'duplicate-confirm-modal';
+                    modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-300';
+                    document.body.appendChild(modal);
+                }
+                modal.innerHTML = `
+                    <div class="glass-panel glass-surface p-6 rounded-2xl border border-glass-border shadow-2xl max-w-sm w-full text-primary relative bg-white" style="background-color: white; border: 1px solid rgba(0,0,0,0.1);">
+                        <h3 class="font-headline-md text-lg font-black text-primary mb-2 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[#FF6B35]">warning</span>
+                            Similar Incident Found
+                        </h3>
+                        <p class="text-xs font-semibold text-on-surface-variant mb-4 leading-relaxed">
+                            A similar issue has already been reported nearby.
+                        </p>
+                        <div class="bg-surface-container-low border border-glass-border p-3 rounded-xl space-y-1 mb-6 text-xs text-on-surface-variant font-semibold">
+                            <div class="flex justify-between">
+                                <span>Incident ID:</span>
+                                <span class="text-primary font-bold">#${dupData.existing_incident_id}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Distance:</span>
+                                <span class="text-primary font-bold">${dupData.distance}</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <button id="join-report-btn" class="w-full bg-[#FF6B35] text-white hover:bg-[#FF6B35]/90 py-3 rounded-xl font-bold text-xs shadow-md transition active:scale-95">
+                                Join Existing Report
+                            </button>
+                            <button id="report-anyway-btn" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 rounded-xl font-bold text-xs transition active:scale-95">
+                                Report Anyway
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                modal.classList.remove('hidden');
+                
+                modal.querySelector('#join-report-btn').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve('join');
+                };
+                modal.querySelector('#report-anyway-btn').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve('anyway');
+                };
+            });
         }
 
         function supportExistingReport() {
