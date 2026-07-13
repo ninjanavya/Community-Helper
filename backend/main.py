@@ -870,7 +870,7 @@ async def analyze_incident(
                         "recommendation": validation_recommendation
                     }
             except Exception as e:
-                logger.error(f"AVE image validation encountered error: {e}")
+                logger.error(f"AVE image validation encountered error: {e}", exc_info=True)
 
         from ai.incident_engine import analyze_incident as cie_analyze_incident
         start_gemini = time.time()
