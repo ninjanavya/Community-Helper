@@ -377,6 +377,8 @@ class IncidentCreate(BaseModel):
     iir_status: Optional[str] = None
     community_confirmations: Optional[int] = 0
     duplicate_of: Optional[str] = None
+    gps_consistent: Optional[bool] = True
+    image_recent: Optional[bool] = True
 
 class IncidentUpdate(BaseModel):
     status: Optional[str] = None
@@ -649,7 +651,9 @@ async def create_incident(incident: IncidentCreate):
         "iir": incident.iir,
         "iir_status": incident.iir_status,
         "community_confirmations": incident.community_confirmations if incident.community_confirmations is not None else 0,
-        "duplicate_of": incident.duplicate_of
+        "duplicate_of": incident.duplicate_of,
+        "gps_consistent": incident.gps_consistent if incident.gps_consistent is not None else True,
+        "image_recent": incident.image_recent if incident.image_recent is not None else True
     }
 
     if USE_FIREBASE:

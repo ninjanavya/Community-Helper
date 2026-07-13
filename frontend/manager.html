@@ -1188,6 +1188,9 @@
             // ── Smart Resource Allocation Engine ──
             const alloc = allocateResourceTeam(inc, incidentsList);
             
+            // ── Evidence Trust Score Engine ──
+            const trustScore = computeTrustScore(inc, incidentsList);
+            
             // Suggested Crew Size Logic
             let crewSize = 2;
             const prioUpper = prio.toUpperCase();
@@ -1511,7 +1514,7 @@
 
                     <!-- Collapsible Content -->
                     <div id="operational-brief-content" class="hidden mt-4 space-y-4 overflow-hidden transition-all duration-500 ease-in-out opacity-0 max-h-0">
-                        <div class="border-t border-glass-border pt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <div class="border-t border-glass-border pt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
                             <!-- Left Column: Details -->
                             <div class="space-y-3">
                                 <div class="bg-surface-container-low border border-glass-border p-3 rounded-xl flex items-center gap-3">
@@ -1603,6 +1606,34 @@
                                 <div class="space-y-1 pt-2 border-t border-glass-border">
                                     <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase font-bold">Reason</span>
                                     <p class="text-[10px] text-primary/80 leading-relaxed font-semibold">${alloc.reason}</p>
+                                </div>
+                            </div>
+
+                            <!-- Fifth Column: Evidence Trust Score -->
+                            <div class="bg-surface-container-low border border-glass-border p-4 rounded-xl space-y-4 flex flex-col justify-between">
+                                <div class="space-y-4">
+                                    <span class="block text-[8px] font-technical-label text-[#FF6B35] uppercase tracking-wider font-bold">Evidence Trust Score</span>
+                                    <div class="flex items-baseline justify-between border-b border-glass-border pb-2">
+                                        <span class="text-2xl font-black text-primary font-sans">${trustScore.score}%</span>
+                                        <span class="px-2 py-0.5 text-[8px] ${trustScore.class} font-technical-label font-bold rounded">${trustScore.label}</span>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <span class="block text-[8px] font-technical-label text-on-surface-variant uppercase tracking-wider leading-none font-bold">Verification Factors</span>
+                                        <ul class="space-y-1.5 text-[10px] font-sans font-semibold">
+                                            ${trustScore.reasons.map(r => `
+                                                <li class="flex items-center gap-1.5 text-primary/80">
+                                                    <span class="text-status-resolved text-xs font-bold font-sans">✓</span>
+                                                    <span>${r}</span>
+                                                </li>
+                                            `).join('')}
+                                            ${trustScore.penalties.map(p => `
+                                                <li class="flex items-center gap-1.5 text-primary/80">
+                                                    <span class="text-error text-xs font-bold font-sans">✗</span>
+                                                    <span>${p}</span>
+                                                </li>
+                                            `).join('')}
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2029,6 +2060,80 @@
                 eta: bestMatch.eta,
                 suitability: bestMatch.suitability,
                 reason: reason
+            };
+        }
+
+        function computeTrustScore(inc, allIncidents) {
+            let score = 0;
+            const reasons = [];
+            const penalties = [];
+            
+            const hasImage = inc.attachments && inc.attachments.image;
+            if (hasImage) {
+                score += 30;
+                reasons.push("Image validated");
+            } else {
+                penalties.push("No image provided");
+            }
+            
+            const gpsConsistent = inc.gps_consistent !== false;
+            if (hasImage && gpsConsistent) {
+                score += 20;
+                reasons.push("GPS consistent");
+            } else if (hasImage) {
+                penalties.push("GPS location mismatch");
+            }
+            
+            const imageRecent = inc.image_recent !== false;
+            if (hasImage && imageRecent) {
+                score += 20;
+                reasons.push("Recent image");
+            } else if (hasImage) {
+                penalties.push("Outdated image");
+            }
+            
+            const noDuplicate = !inc.duplicate_of;
+            if (noDuplicate) {
+                score += 15;
+                reasons.push("No duplicate nearby");
+            } else {
+                penalties.push("Duplicate conflict exists");
+            }
+            
+            const citizenEmail = inc.reporter_email || "citizen@communityhelper.gov";
+            const hasPrevVerified = allIncidents.some(other => 
+                other.reporter_email === citizenEmail && 
+                other.id !== inc.id && 
+                other.status === "Resolved"
+            );
+            if (hasPrevVerified) {
+                score += 15;
+                reasons.push("Citizen history verified");
+            } else {
+                penalties.push("First-time reporter");
+            }
+            
+            score = Math.min(Math.max(score, 0), 100);
+            
+            let badgeClass = "bg-slate-500/15 text-slate-500";
+            let label = "Low Trust";
+            if (score >= 80) {
+                badgeClass = "bg-emerald-500/15 text-emerald-500 border border-emerald-500/20";
+                label = "High Trust";
+            } else if (score >= 50) {
+                badgeClass = "bg-amber-500/15 text-amber-500 border border-amber-500/20";
+                label = "Medium Trust";
+            } else {
+                badgeClass = "bg-rose-500/15 text-rose-500 border border-rose-500/20";
+                label = "Low Trust";
+            }
+            
+            return {
+                score,
+                reasons,
+                penalties,
+                class: badgeClass,
+                label
             };
         }
 

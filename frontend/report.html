@@ -1211,6 +1211,9 @@
             };
         }
 
+        let currentGpsConsistentSignal = true;
+        let currentImageRecentSignal = true;
+
         function parseExifDate(exifDateStr) {
             if (!exifDateStr) return null;
             const parts = exifDateStr.trim().split(" ");
@@ -1230,6 +1233,7 @@
         }
 
         async function verifyImageFreshness() {
+            currentImageRecentSignal = true;
             return new Promise((resolve) => {
                 const imgInput = document.getElementById('img-input');
                 if (!imgInput || imgInput.files.length === 0) {
@@ -1322,6 +1326,7 @@
             
             document.getElementById('freshness-continue-btn').onclick = () => {
                 modal.classList.add('hidden');
+                currentImageRecentSignal = false;
                 resolve(true);
             };
         }
@@ -1397,6 +1402,7 @@
         }
 
         async function verifyGpsConsistency() {
+            currentGpsConsistentSignal = true;
             return new Promise((resolve) => {
                 const imgInput = document.getElementById('img-input');
                 if (!imgInput || imgInput.files.length === 0) {
@@ -1529,6 +1535,7 @@
             
             document.getElementById('gps-continue-btn').onclick = () => {
                 modal.classList.add('hidden');
+                currentGpsConsistentSignal = false;
                 resolve(true);
             };
         }
@@ -1836,6 +1843,8 @@
                         {"agent": "Priority Agent", "log": `Assessed combined severity score as ${aiResult.priority || "Moderate"}.` },
                         {"agent": "Assignment Agent", "log": `Allocated ticket queue to ${aiResult.department || "Public Works Department"}.` }
                     ],
+                    gps_consistent: currentGpsConsistentSignal,
+                    image_recent: currentImageRecentSignal,
                     reporter_email: localStorage.getItem('hero_user_email') || 'citizen@communityhelper.gov',
                     crew: "Unassigned",
                     assigned_team: "Unassigned",
