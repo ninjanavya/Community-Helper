@@ -26,7 +26,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+
 
 @app.middleware("http")
 async def db_and_role_middleware(request: Request, call_next):
@@ -1142,7 +1142,6 @@ def predict_resolution(payload: PredictResolutionRequest):
         "formatted_estimate": days,
         "confidence": 94.2
     }
-app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 # ═══════════════════════════════════════════════════
 # ANALYTICS & AUDIT LOGS
@@ -1404,3 +1403,5 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
         manager.disconnect(websocket)
+
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
